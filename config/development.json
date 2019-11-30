@@ -1,0 +1,25 @@
+{
+    "mail":{
+        "name":"",
+        "password": ""
+    },
+    "mongodb":{
+        "host":"mongodb://127.0.0.1:27017/YallaDealz",
+        "settings":{
+            "useNewUrlParser": true,
+            "useUnifiedTopology": true, 
+            "useFindAndModify": false, 
+            "useCreateIndex": true
+        },
+        "databaseName":""
+    },
+    "jwt":{
+        "secret": "secret",
+        "options":{
+            "expiresIn":"1h"
+        }
+    },
+    "bcrypt":{
+        "saltRounds":10
+    }
+}

@@ -1,0 +1,8 @@
+{
+    "mail":{
+     "password": "app_mail_password"
+    },
+    "jwt":{
+       "secret": "app_jwt_secret"
+    }
+ }
