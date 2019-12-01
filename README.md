@@ -1,2 +1,2 @@
-# YallaDealz
+# Yalla Dealz Backend Project
 
