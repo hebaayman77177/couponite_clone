@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const config = require('config');
 const jwt = require('jsonwebtoken');
+const Joi = require('@hapi/joi');
 
 
 const userSchema = new mongoose.Schema({
@@ -15,7 +16,7 @@ const userSchema = new mongoose.Schema({
         index:{unique: true}
     },          
     address: {  
-        county: String,
+        country: String,
         city: String
     },
     role: String,
@@ -60,7 +61,51 @@ userSchema.statics.verifyToken = function(token){
 
 const UserModel = mongoose.model('user', userSchema);
 
-module.exports = UserModel;
+const addressValidationSchema = Joi.object({
+    country: Joi.string()
+    .min(3)
+    .max(20),
+    city: Joi.string()
+    .min(3)
+    .max(20)
+});
+
+const userValidationSchema = Joi.object({
+
+    firstName: Joi.string()
+    .min(3)
+    .max(30)
+    .required(),
+
+    lastName: Joi.string()
+    .min(3)
+    .max(30)
+    .required(),
+
+    password: Joi.string()
+    .min(3)
+    .max(30)
+    .required(),
+
+    email: Joi.string()
+    .email({ minDomainSegments: 2})
+    .required(),
+
+    role: Joi.string().min(3)
+    .max(30),
+
+    isVerified: Joi.bool(),
+
+   address: addressValidationSchema
+});
+
+function validateUser(req){
+    return result = userValidationSchema.validate(req.body);
+}
+module.exports = {
+    User:UserModel,
+    validate: validateUser
+};
 
 // let user = new User({});
 // user.setPassword(122554587552);

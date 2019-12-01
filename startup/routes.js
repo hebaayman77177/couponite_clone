@@ -1,5 +1,6 @@
 const express = require('express');
-//const errorHandler = require('../middleware/error-middleware');
+const errorHandler = require('../middlewares/error-middleware');
+const userRouter = require('../routes/user-router');
 //const notfound = require('../middleware/notfound-middleware');
 
 
@@ -12,6 +13,8 @@ module.exports = function (app){
         res.send('<h1> Hello World!</h1>');
     });
 
+    app.use('/user', userRouter);
+
     //app.use(notfound);
-    //app.use(errorHandler);
+    app.use(errorHandler);
 }
