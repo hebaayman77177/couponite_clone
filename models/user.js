@@ -108,9 +108,3 @@ module.exports = {
   User: UserModel,
   validate: validateUser
 };
-
-// let user = new User({});
-// user.setPassword(122554587552);
-// user.save();
-
-// Usre.verifyToken();

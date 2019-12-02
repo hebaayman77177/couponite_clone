@@ -65,7 +65,6 @@ async function signup(req, res, next) {
     delete body.password;
     delete body.role;
     delete body.isVerified;
-    console.log(body);
     user = new User(body);
     await user.setPassword(req.body.password);
     await user.save();
