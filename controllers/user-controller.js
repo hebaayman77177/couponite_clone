@@ -1,41 +1,273 @@
+const _ = require("lodash");
+const crypto = require("crypto");
+const { User, validate } = require("../models/user");
+const { Token } = require("../models/token");
+const sendEmail = require("../utils/mail");
 
-const {User, validate} = require('../models/user');
-const _ = require('lodash');
+async function create(req, res, next) {
+  const result = validate(req);
+  if (result.error) {
+    res.statusCode = 422;
+    //return res.send(result.error.details[0].message);
+    return res.json(result);
+  }
+  res.json(result);
+}
 
-async function create(req, res, next){
+// async function login(req, res, next) {
+//   try {
+//     const user = await User.findOne({ email: req.body.email });
 
+//     if (!user || !user.verifyPassword(req.body.password)) {
+//       res.statusCode = 401;
+//       return res.json({ message: "email or passsord is invalid" });
+//     } else if (!user.isVerified) {
+//       res.statusCode = 401;
+//       return res.json({ message: "you must verify first" });
+//     } else {
+//       return res.json({
+//         token: user.generateToken(),
+//         user: _.pick(user, ["firstName", "lastName", "_id", "role"])
+//       });
+//     }
+//   } catch (err) {
+//     next(err);
+//   }
+// }
+async function login(req, res, next) {
+  //check the email and password exist
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ message: "email or passsord is invalid" });
+  }
+  //check if there is a user with  correct password
+  const user = await User.findOne({ email: email });
+  if (!user || !(await user.verifyPassword(password))) {
+    return res.status(400).json({ message: "email or passsord is invalid" });
+  }
+  return res.json({
+    token: user.generateToken(),
+    user: _.pick(user, ["firstName", "lastName", "_id", "role"])
+  });
+}
+
+async function signup(req, res, next) {
+  try {
+    // Check for validation errors
     const result = validate(req);
-    if (result.error){
-        res.statusCode = 422;
-        //return res.send(result.error.details[0].message);
-        return res.json(result);
+    if (result.error) {
+      res.status(422).json({ message: result.error.details[0].message });
     }
-    res.json(result);
+    // Make sure this account doesn't already exist
+    let user = await User.findOne({ email: req.body.email });
 
+    // Make sure user doesn't already exist
+    if (user)
+      return res.status(400).json({
+        message:
+          "The email address you have entered is already associated with another account."
+      });
+
+    // Create and save the user
+    user = new User({
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      email: req.body.email
+    });
+    await user.setPassword(req.body.password);
+    await user.save();
+
+    // Create a verification token for this user
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const token = new Token({
+      _userId: user._id,
+      token: crypto
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex")
+    });
+
+    // Save the verification token
+    await token.save();
+    const options = {
+      email: user.email,
+      subject: "Account Verification Token",
+      message: resetToken
+    };
+    await sendEmail(options);
+    res.status(200).json({
+      message: `A verification email has been sent to ${user.email} `
+    });
+  } catch (err) {
+    next(err);
+  }
 }
 
-async function login(req, res, next){
+async function confirmToken(req, res, next) {
+  // Find a matching token
+  const retoken = crypto
+    .createHash("sha256")
+    .update(req.body.token)
+    .digest("hex");
+  const token = await Token.findOne({ token: retoken });
+  if (!token)
+    return res.status(400).json({
+      message:
+        "We were unable to find a valid token. Your token my have expired."
+    });
+  // If we found a token, find a matching user
+  const user = await User.findOne({
+    _id: token._userId,
+    email: req.body.email
+  });
+  if (!user)
+    return res
+      .status(400)
+      .json({ message: "We were unable to find a user for this token." });
+  if (user.isVerified)
+    return res.status(400).json({
+      message: "This user has already been verified."
+    });
 
-    try{
-        const user = await  User.findOne({emai: req.body.email});
-        
-        if (!( user) || !(user.verifyPassword(req.body.password))){
-            res.statusCode = 401;
-            return res.json({message: 'email or passsord is invalid'});
-        }else if( ! user.isVerified){
-            res.statusCode = 401;
-            return res.json({message: 'youre must verify first'});
-        }else{
-            return res.json({
-                token: user.gnerateToken(),
-                user: _.pick(user, ['firstName', 'lastName', '_id', 'role'])
-            });
-        }
-    }catch(err){
-        next(err);
-    }
+  // Verify and save the user
+  user.isVerified = true;
+  await user.save();
+  res
+    .status(200)
+    .json({ message: "The account has been verified. Please log in." });
 }
+
+async function resendToken(req, res, next) {
+  const user = await User.findOne({ email: req.body.email });
+  if (!user)
+    return res
+      .status(400)
+      .json({ message: "We were unable to find a user with that email." });
+  if (user.isVerified)
+    return res.status(400).send({
+      message: "This account has already been verified. Please log in."
+    });
+
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  const token = new Token({
+    _userId: user._id,
+    token: crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex")
+  });
+
+  // Save the verification token
+  await token.save();
+
+  const mailOptions = {
+    email: user.email,
+    subject: "Account Verification Token",
+    message: resetToken
+  };
+  await sendEmail(mailOptions);
+
+  res.status(200).send({
+    message: `A verification email has been sent to ${user.email} .`
+  });
+}
+
+async function forgotPassword(req, res, next) {
+  //get the user
+  const user = await User.findOne({ email: req.body.email });
+  if (!user) {
+    return res
+      .status(400)
+      .send({ message: "there is no user with this email" });
+  }
+  //get the token
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  const token = new Token({
+    _userId: user._id,
+    token: crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex")
+  });
+  await token.save();
+
+  // console.log(resetToken);
+  //send the token to the email of the user
+  const options = {
+    email: user.email,
+    subject: "token to reset your password",
+    message: resetToken
+  };
+  await sendEmail(options);
+
+  res.status(200).json({
+    status: "success",
+    message: "Token sent to email!"
+  });
+}
+
+async function resetPassword(req, res, next) {
+  //get the user of the token
+  let token = crypto
+    .createHash("sha256")
+    .update(req.body.token)
+    .digest("hex");
+  token = await Token.findOne({ token });
+  if (!token)
+    return res.status(400).send({
+      message:
+        "We were unable to find a valid token. Your token my have expired."
+    });
+  const user = await User.findOne({
+    _id: token._userId,
+    email: req.body.email
+  });
+  if (!user)
+    return res
+      .status(400)
+      .json({ message: "We were unable to find a user for this token." });
+  //verifay first
+  //save the new password
+  // TODO: should validate the password first
+  // const result = validate(req);
+  // if (result.error) {
+  //   res.status(422).json({ message: result.error.details[0].message });
+  // }
+  user.password = req.body.password;
+  await user.save();
+  res.status(200).json({
+    status: "success",
+    message: "the password has been successfully changed"
+  });
+}
+
+//change the password of logedin user
+// exports.updatePassword = async (req, res, next) => {
+//   // 1) get the user
+//   const user = await User.findById(req.currentUser._id).select("+password");
+//   // 2) check the given password
+//   if (!user.checkPassword(req.body.password, user.password)) {
+//     return next(new AppError("your password is wrong", 404));
+//   }
+//   // 3) update the password
+//   user.password = req.body.password;
+//   user.confirmPassword = req.body.confirmPassword;
+//   await user.save();
+//   // login and return the jwt
+//   const token = user.getToken({ id: user._id });
+//   return res.status(200).json({
+//     token,
+//     status: "succeed",
+//     message: "the password has been successfully changed"
+//   });
+// };
 
 module.exports = {
-    create: create
-}
+  create: create,
+  login: login,
+  signup: signup,
+  confirmToken: confirmToken,
+  resendToken: resendToken,
+  forgotPassword: forgotPassword,
+  resetPassword: resetPassword
+};
