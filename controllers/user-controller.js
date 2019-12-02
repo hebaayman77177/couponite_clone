@@ -14,26 +14,6 @@ async function create(req, res, next) {
   res.json(result);
 }
 
-// async function login(req, res, next) {
-//   try {
-//     const user = await User.findOne({ email: req.body.email });
-
-//     if (!user || !user.verifyPassword(req.body.password)) {
-//       res.statusCode = 401;
-//       return res.json({ message: "email or passsord is invalid" });
-//     } else if (!user.isVerified) {
-//       res.statusCode = 401;
-//       return res.json({ message: "you must verify first" });
-//     } else {
-//       return res.json({
-//         token: user.generateToken(),
-//         user: _.pick(user, ["firstName", "lastName", "_id", "role"])
-//       });
-//     }
-//   } catch (err) {
-//     next(err);
-//   }
-// }
 async function login(req, res, next) {
   //check the email and password exist
   const { email, password } = req.body;
@@ -226,13 +206,6 @@ async function resetPassword(req, res, next) {
     return res
       .status(400)
       .json({ message: "We were unable to find a user for this token." });
-  //verifay first
-  //save the new password
-  // TODO: should validate the password first
-  // const result = validate(req);
-  // if (result.error) {
-  //   res.status(422).json({ message: result.error.details[0].message });
-  // }
   user.password = req.body.password;
   await user.save();
   res.status(200).json({
@@ -240,27 +213,6 @@ async function resetPassword(req, res, next) {
     message: "the password has been successfully changed"
   });
 }
-
-//change the password of logedin user
-// exports.updatePassword = async (req, res, next) => {
-//   // 1) get the user
-//   const user = await User.findById(req.currentUser._id).select("+password");
-//   // 2) check the given password
-//   if (!user.checkPassword(req.body.password, user.password)) {
-//     return next(new AppError("your password is wrong", 404));
-//   }
-//   // 3) update the password
-//   user.password = req.body.password;
-//   user.confirmPassword = req.body.confirmPassword;
-//   await user.save();
-//   // login and return the jwt
-//   const token = user.getToken({ id: user._id });
-//   return res.status(200).json({
-//     token,
-//     status: "succeed",
-//     message: "the password has been successfully changed"
-//   });
-// };
 
 module.exports = {
   create: create,
