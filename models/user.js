@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
   },
   birthDate: Date,
   job: String,
-  role: String,
+  role: { type: String, default: "user" },
   isVerified: { type: Boolean, default: false }
 });
 
