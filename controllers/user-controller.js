@@ -16,19 +16,31 @@ async function create(req, res, next) {
 
 async function login(req, res, next) {
   //check the email and password exist
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ message: "email or passsord is invalid" });
+  const { email, password, phone } = req.body;
+  if (!(email || phone) || !password) {
+    return res.status(400).json({ message: "some info are invalid" });
   }
   //check if there is a user with  correct password
-  const user = await User.findOne({ email: email });
-  if (!user || !(await user.verifyPassword(password))) {
-    return res.status(400).json({ message: "email or passsord is invalid" });
+  if (email) {
+    const user = await User.findOne({ email: email });
+    if (!user || !(await user.verifyPassword(password))) {
+      return res.status(400).json({ message: "some info are invalid" });
+    }
+    return res.json({
+      token: user.generateToken(),
+      user: _.pick(user, ["firstName", "lastName", "_id", "role"])
+    });
+    // eslint-disable-next-line no-else-return
+  } else if (phone) {
+    const user = await User.findOne({ phone });
+    if (!user || !(await user.verifyPassword(password))) {
+      return res.status(400).json({ message: "email or passsord is invalid" });
+    }
+    return res.json({
+      token: user.generateToken(),
+      user: _.pick(user, ["firstName", "lastName", "_id", "role"])
+    });
   }
-  return res.json({
-    token: user.generateToken(),
-    user: _.pick(user, ["firstName", "lastName", "_id", "role"])
-  });
 }
 
 async function signup(req, res, next) {
@@ -36,7 +48,7 @@ async function signup(req, res, next) {
     // Check for validation errors
     const result = validate(req);
     if (result.error) {
-      res.status(422).json({ message: result.error.details[0].message });
+      return res.status(422).json({ message: result.error.details[0].message });
     }
     // Make sure this account doesn't already exist
     let user = await User.findOne({ email: req.body.email });
@@ -49,11 +61,12 @@ async function signup(req, res, next) {
       });
 
     // Create and save the user
-    user = new User({
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      email: req.body.email
-    });
+    const body = { ...req.body };
+    delete body.password;
+    delete body.role;
+    delete body.isVerified;
+    console.log(body);
+    user = new User(body);
     await user.setPassword(req.body.password);
     await user.save();
 
