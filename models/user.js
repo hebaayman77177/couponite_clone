@@ -88,7 +88,10 @@ const userValidationSchema = Joi.object({
     .required(),
 
   phone: Joi.string()
-  .pattern(/^01[0125]\d{8}$/, { name: 'numbers'}),
+  .pattern(/^01[0125]\d{8}$/, { name: 'numbers'})
+  .required(),
+  
+  birthDate: Joi.date(),
   
   email: Joi.string()
     .email({ minDomainSegments: 2 })
