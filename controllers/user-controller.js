@@ -22,7 +22,7 @@ async function login(req, res, next) {
   }
   //check if there is a user with  correct password
   if (email) {
-    const user = await User.findOne({ email: email });
+    const user = await User.findOne({ email: email, isVerified: true });
     if (!user || !(await user.verifyPassword(password))) {
       return res.status(400).json({ message: "some info are invalid" });
     }
@@ -32,7 +32,7 @@ async function login(req, res, next) {
     });
     // eslint-disable-next-line no-else-return
   } else if (phone) {
-    const user = await User.findOne({ phone });
+    const user = await User.findOne({ phone: phone, isVerified: true });
     if (!user || !(await user.verifyPassword(password))) {
       return res.status(400).json({ message: "email or passsord is invalid" });
     }
@@ -112,6 +112,7 @@ async function confirmToken(req, res, next) {
     _id: token._userId,
     email: req.body.email
   });
+
   if (!user)
     return res
       .status(400)
@@ -124,6 +125,7 @@ async function confirmToken(req, res, next) {
   // Verify and save the user
   user.isVerified = true;
   await user.save();
+  await Token.findOneAndDelete({ _id: token._id });
   res
     .status(200)
     .json({ message: "The account has been verified. Please log in." });
@@ -218,14 +220,83 @@ async function resetPassword(req, res, next) {
     return res
       .status(400)
       .json({ message: "We were unable to find a user for this token." });
-  user.password = req.body.password;
+  await user.setPassword(req.body.password);
+  // console.log(req.body.password);
   await user.save();
+  await Token.findOneAndDelete({ _id: token._id });
   res.status(200).json({
     status: "success",
     message: "the password has been successfully changed"
   });
 }
 
+async function changePhone(req, res, next) {
+  //get the user
+  const decoded = User.verifyToken(req.body.token);
+  if (!decoded) {
+    return res.status(401).json({ message: "not authorized" });
+  }
+  console.log(decoded);
+  const user = await User.findOne({ _id: decoded.id });
+  if (!user) {
+    return res.status(401).json({ message: "not authorized" });
+  }
+  // //get the token
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  const token = new Token({
+    _userId: user._id,
+    token: crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex")
+  });
+  await token.save();
+
+  // console.log(resetToken);
+  //send the token to the email of the user
+  const options = {
+    email: user.email,
+    subject: "token to reset your password",
+    message: resetToken
+  };
+  await sendEmail(options);
+
+  return res.status(200).json({
+    status: "success",
+    message: "Token sent to email!"
+  });
+}
+async function resetPhone(req, res, next) {
+  const decoded = User.verifyToken(req.body.token);
+  console.log(decoded);
+  if (!decoded) {
+    return res.status(401).json({ message: "not authorized" });
+  }
+
+  const user = await User.findOne({ _id: decoded.id });
+  if (!user) {
+    return res.status(401).json({ message: "not authorized" });
+  }
+  console.log(user);
+  //get the user of the token
+  let token = crypto
+    .createHash("sha256")
+    .update(req.body.verificationToken)
+    .digest("hex");
+  token = await Token.findOne({ token });
+  if (!token)
+    return res.status(400).json({
+      message:
+        "We were unable to find a valid token. Your token my have expired."
+    });
+  await Token.findOneAndDelete({ _id: token._id });
+  //TODO:validate the phone before saving
+  user.phone = req.body.phone;
+  await user.save();
+  return res.status(200).json({
+    message: "the phone has been successfully changed"
+  });
+}
 module.exports = {
   create: create,
   login: login,
@@ -233,5 +304,7 @@ module.exports = {
   confirmToken: confirmToken,
   resendToken: resendToken,
   forgotPassword: forgotPassword,
-  resetPassword: resetPassword
+  resetPassword: resetPassword,
+  changePhone: changePhone,
+  resetPhone: resetPhone
 };

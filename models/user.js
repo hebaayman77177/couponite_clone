@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
   lastName: String, // required
   password: String, // required,
   phone: {
-    type: Number,
+    type: String,
     unique: true
   },
   email: {
@@ -86,7 +86,7 @@ const userValidationSchema = Joi.object({
     .min(3)
     .max(30)
     .required(),
-  phone: Joi.number().required(),
+  phone: Joi.string().required(),
   email: Joi.string()
     .email({ minDomainSegments: 2 })
     .required(),

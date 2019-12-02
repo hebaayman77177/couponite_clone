@@ -8,5 +8,6 @@ router.post("/confirmToken", userController.confirmToken);
 router.post("/resendToken", userController.resendToken);
 router.post("/forgotPassword", userController.forgotPassword);
 router.post("/resetPassword", userController.resetPassword);
-
+router.post("/changePhone", userController.changePhone);
+router.post("/resetPhone", userController.resetPhone);
 module.exports = router;

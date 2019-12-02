@@ -1,7 +1,13 @@
 {
     "mail":{
-        "name":"",
-        "password": ""
+        "options":{
+            "host":"smtp.mailtrap.io",
+            "port":"2525",
+            "auth":{
+                "user":"899acdf487ebd1",
+                "pass":"47851cdc50838a"
+            }
+        }
     },
     "mongodb":{
         "host":"mongodb://127.0.0.1:27017/YallaDealz",
