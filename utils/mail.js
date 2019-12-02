@@ -1,15 +1,9 @@
 const nodemailer = require("nodemailer");
+const config = require("config");
 
 const sendEmail = async options => {
   // 1) Create a transporter
-  const transporter = nodemailer.createTransport({
-    host: "smtp.mailtrap.io",
-    port: "2525",
-    auth: {
-      user: "899acdf487ebd1",
-      pass: "47851cdc50838a"
-    }
-  });
+  const transporter = nodemailer.createTransport(config.get("mail.options"));
   // 2) Define the email options
   const mailOptions = {
     from: "Jonas Schmedtmann <hello@jonas.io>",
