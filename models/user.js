@@ -100,6 +100,9 @@ const userValidationSchema = Joi.object({
   role: Joi.string()
     .min(3)
     .max(30),
+  job: Joi.string()
+  .min(3)
+  .max(50),
 
   isVerified: Joi.bool(),
 
