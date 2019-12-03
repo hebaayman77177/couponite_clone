@@ -204,13 +204,12 @@ async function forgotPassword(req, res, next) {
 }
 
 async function resetPassword(req, res, next) {
-  const { type } = req.body;
   //get the user of the token
   let token = crypto
     .createHash("sha256")
     .update(req.body.token)
     .digest("hex");
-  token = await Token.findOne({ token, type });
+  token = await Token.findOne({ token, type: "password" });
   if (!token)
     return res.status(400).send({
       message:
