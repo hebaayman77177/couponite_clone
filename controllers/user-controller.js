@@ -237,6 +237,8 @@ async function changePhone(req, res, next) {
     return res.status(401).json({ message: "not authorized" });
   }
   console.log(decoded);
+  
+  /** why we ge the user ? */
   const user = await User.findOne({ _id: decoded.id });
   if (!user) {
     return res.status(401).json({ message: "not authorized" });

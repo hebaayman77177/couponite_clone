@@ -62,6 +62,14 @@ userSchema.statics.verifyToken = function(token) {
 
 const UserModel = mongoose.model("user", userSchema);
 
+const emailValidationSchema = Joi.string()
+.email({ minDomainSegments: 2 });
+
+
+const phoneValidationSchema = Joi.string()
+.pattern(/^01[0125]\d{8}$/, { name: 'numbers'});
+
+
 const addressValidationSchema = Joi.object({
   country: Joi.string()
     .min(3)
@@ -115,5 +123,7 @@ function validateUser(req) {
 }
 module.exports = {
   User: UserModel,
-  validate: validateUser
+  validate: validateUser,
+  emailValidationSchema: emailValidationSchema,
+  phoneValidationSchema: phoneValidationSchema
 };
