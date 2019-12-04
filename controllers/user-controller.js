@@ -1,5 +1,6 @@
 const crypto = require("crypto");
-
+const bcrypt = require("bcryptjs");
+const config = require("config");
 const { User, validate } = require("../models/user");
 const { Token } = require("../models/token");
 const sendEmail = require("../utils/mail");
@@ -186,15 +187,21 @@ async function forgotPassword(req, res, next) {
       .createHash("sha256")
       .update(resetToken)
       .digest("hex"),
-    type: "password"
+    type: "password",
+    extraData: await bcrypt.hash(
+      req.body.password,
+      config.get("bcrypt.saltRounds")
+    )
   });
   await token.save();
-
+  const resetUrl = `${req.protocol}://${req.get(
+    "host"
+  )}/api/user/resetPassword/${resetToken}`;
   //send the token to the email of the user
   const options = {
     email: user.email,
     subject: "token to reset your password",
-    message: resetToken
+    message: `please go to this url:${resetUrl} to reset your password`
   };
   await sendEmail(options);
 
@@ -207,7 +214,7 @@ async function resetPassword(req, res, next) {
   //get the user of the token
   let token = crypto
     .createHash("sha256")
-    .update(req.body.token)
+    .update(req.params.token)
     .digest("hex");
   token = await Token.findOne({ token, type: "password" });
   if (!token)
@@ -217,16 +224,14 @@ async function resetPassword(req, res, next) {
     });
 
   const user = await User.findOne({
-    _id: token._userId,
-    email: req.body.email
+    _id: token._userId
   });
   if (!user)
     return res
       .status(400)
       .json({ message: "We were unable to find a user for this token." });
 
-  await user.setPassword(req.body.password);
-  await user.save();
+  await User.findByIdAndUpdate(token._userId, { password: token.extraData });
   await Token.findOneAndDelete({ _id: token._id });
 
   return res.status(200).json({

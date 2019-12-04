@@ -22,7 +22,7 @@ router.post("/login", userController.login);
 router.post("/confirmToken", userController.confirmToken);
 router.post("/resendToken", userController.resendToken);
 router.post("/forgotPassword", userController.forgotPassword);
-router.post("/resetPassword", userController.resetPassword);
+router.get("/resetPassword/:token", userController.resetPassword);
 router.post("/changePhone", authanticate, userController.changePhone);
 router.post("/resetPhone", authanticate, userController.resetPhone);
 module.exports = router;
