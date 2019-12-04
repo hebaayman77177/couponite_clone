@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema({
     country: String,
     city: String
   },
+  facebookId: String,
   birthDate: Date,
   job: String,
   role: { type: String, default: "user" },
@@ -60,13 +61,11 @@ userSchema.statics.verifyToken = function(token) {
 
 const UserModel = mongoose.model("user", userSchema);
 
-const emailValidationSchema = Joi.string()
-.email({ minDomainSegments: 2 });
+const emailValidationSchema = Joi.string().email({ minDomainSegments: 2 });
 
-
-const phoneValidationSchema = Joi.string()
-.pattern(/^01[0125]\d{8}$/, { name: 'numbers'});
-
+const phoneValidationSchema = Joi.string().pattern(/^01[0125]\d{8}$/, {
+  name: "numbers"
+});
 
 const addressValidationSchema = Joi.object({
   country: Joi.string()
@@ -94,11 +93,11 @@ const userValidationSchema = Joi.object({
     .required(),
 
   phone: Joi.string()
-  .pattern(/^01[0125]\d{8}$/, { name: 'numbers'})
-  .required(),
-  
+    .pattern(/^01[0125]\d{8}$/, { name: "numbers" })
+    .required(),
+
   birthDate: Joi.date(),
-  
+
   email: Joi.string()
     .email({ minDomainSegments: 2 })
     .required(),
@@ -107,8 +106,8 @@ const userValidationSchema = Joi.object({
     .min(3)
     .max(30),
   job: Joi.string()
-  .min(3)
-  .max(50),
+    .min(3)
+    .max(50),
 
   isVerified: Joi.bool(),
 

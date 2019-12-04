@@ -1,5 +1,5 @@
 const crypto = require("crypto");
-const _ = require("lodash");
+
 const { User, validate } = require("../models/user");
 const { Token } = require("../models/token");
 const sendEmail = require("../utils/mail");
