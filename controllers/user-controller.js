@@ -354,5 +354,8 @@ module.exports = {
   forgotPassword: forgotPassword,
   resetPassword: resetPassword,
   changePhone: changePhone,
-  resetPhone: resetPhone
+  resetPhone: resetPhone,
+  getMyInfo: getMyInfo,
+  editMyInfo: editMyInfo,
+  changeMyPasword: changeMyPasword
 };

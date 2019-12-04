@@ -26,6 +26,11 @@ router.post("/resetPassword", userController.resetPassword);
 router.post("/changePhone", userController.changePhone);
 router.post("/resetPhone", userController.resetPhone);
 
+// owner functionality
+router.get("/myInfo", userController.getMyInfo);
+router.put("/myInfo", userController.editMyInfo);
+touter.put("/myPassword", userController.changeMyPasword);
+
 router.get('/auth/google', googleUtils.authenticateWithGoogle);
 router.get('/auth/google/callback', googleUtils.googleCallBack);
 module.exports = router;
