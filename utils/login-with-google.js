@@ -1,8 +1,8 @@
 
-//const _ = require('lodash');
+const _ = require('lodash');
 const config = require('config');
+const { User } = require('../models/user');
 
-//const app = express();
 var passport = require('passport');
 var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 
@@ -10,65 +10,87 @@ var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 //   Strategies in Passport require a `verify` function, which accept
 //   credentials (in this case, an accessToken, refreshToken, and Google
 //   profile), and invoke a callback with a user object.
-passport.use(new GoogleStrategy(config.get('google'),
-    function (accessToken, refreshToken, profile, done) {
-        // User.findOrCreate({ googleId: profile.id }, function (err, user) {
-        //     return done(err, user);
-        // });
+passport.use(new GoogleStrategy(
+    {
+        clientID: '64947322824-ioam0huh3b5ld40b4rp2rb8fd9qgnb6q.apps.googleusercontent.com',
+        clientSecret: 'oqGJdSWRaGenO1kPT9ostOF6',
+        callbackURL: "http://localhost:3000/api/user/auth/google/callback"
+    },
+    async function (accessToken, refreshToken, profile, done) {
+        try {
+            function firstVerifiedemail(profile) {
 
-        // create user
-        // make token 
-        // send user + token 
+                for (let i = 0; i < profile.emails.length; i++) {
 
-        //console.log('profile :', profile);
-        //console.log('access token :', accessToken);
-        //console.log('refresh token :', refreshToken);
-        return done(null, profile);
-        //return done(null , false, {message: 'some thing wrong  occured'});
-        //return done(new Error('connection error'), false);
+                    if (profile.emails[i].verified)
+                        return profile.emails[i].value;
+                }
+            }
+
+            const user = await User.findOne({ email: firstVerifiedemail(profile) });
+            // if user exist its fine
+            if (user) {
+                return done(null, user);
+            } else {
+                const userData = {
+                    firstName: profile.name.givenName,
+                    lastName: profile.name.familyName,
+                    email: profile.emails[0].value,
+                    role: 'googleUser',
+                    googleId: profile.id
+                }
+
+                const newUser = new User(userData);
+                //create user
+                await newUser.save();
+                return done(null, newUser);
+            }
+        } catch (err) {
+            done(err);
+        }
     }
 ));
 
-app.use(passport.initialize());
-// GET /auth/google
-//   Use passport.authenticate() as route middleware to authenticate the
-//   request.  The first step in Google authentication will involve
-//   redirecting the user to google.com.  After authorization, Google
-//   will redirect the user back to this application at /auth/google/callback
 
 function googleCallBack(req, res, next) {
-
+    // if user is found this handler is responsible for 
+    // creating the token
+    // and customizing error messages.
     passport.authenticate(
         'google',
-        { session: false }, (err, profile, info) => {
+        { session: false }, (err, user, info) => {
 
             //console.log('here iam :', profile);
 
             if (err) {
                 console.log(err);
                 res.statusCode = 500;
-                return res.json({
-                    message: 'connection error'
-                });
-            
-            }if(! profile){
-                    res.statusCode = 401;
-                    console.log(info);
-                    //next(new Error(info.message));
-                    return res.json({ message: info.message })
-            }
+                return next(err);
+                // return res.json({
+                //     message: 'connection error',
+                //     error: err
+                // });
 
-                //req.user = profile;
-                //next();
-                res.json({ user: profile });
+            } if (!user) {
+                res.statusCode = 401;
+                console.log(info);
+                //next(new Error(info.message));
+                return res.json({ message: info.message })
+            }
+            // generate token here
+            res.json({
+                user: user,
+                token: 'generate token'
+            });
 
         })(req, res, next)
 
 }
-
-
-// app.get('/auth/google',
-//     passport.authenticate('google', { scope: ['email profile'] }));
+// GET /auth/google
+//   Use passport.authenticate() as route middleware to authenticate the
+//   request.  The first step in Google authentication will involve
+//   redirecting the user to google.com.  After authorization, Google
+//   will redirect the user back to this application at /auth/google/callback
 
 // GET /auth/google/callback
 //   Use passport.authenticate() as route middleware to authenticate the
@@ -77,11 +99,8 @@ function googleCallBack(req, res, next) {
 //   which, in this example, will redirect the user to the home page.
 
 
-// app.get('/auth/google/callback', authenticateWithGoogle);
-
 module.exports = {
-    authenticateWithGoogle: 
-    passport.authenticate('google', { scope: ['email profile'] }),
-
+    authenticateWithGoogle:
+        passport.authenticate('google', { scope: ['email profile'] }),
     googleCallBack: googleCallBack
 }
