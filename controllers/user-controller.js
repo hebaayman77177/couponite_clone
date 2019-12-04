@@ -299,6 +299,23 @@ async function resetPhone(req, res, next) {
     message: "the phone has been successfully changed"
   });
 }
+
+// user functions
+
+// get my data
+async function getMyInfo(req, res, next){
+  // user must be logged in
+  try{
+
+    const user = await  User.findById(req.user._id);
+    const returnUser = _.omit(user, ['password', 'isVerified', 'role']);
+    return res.json({user: returnUser});
+  }catch(err){
+    next(err);
+  }
+}
+// edit my data
+// change my password
 module.exports = {
   create: create,
   login: login,
