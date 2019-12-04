@@ -2,6 +2,20 @@ const router = require("express").Router();
 const userController = require("../controllers/user-controller");
 const authanticate = require("../middlewares/autahnitcate-middleware");
 
+const passport = require("passport");
+
+router.get("/auth/facebook", passport.authenticate("facebook"));
+
+router.get(
+  "/auth/facebook/callback",
+  passport.authenticate("facebook", {
+    failureRedirect: "/auth/facebook/callback"
+  }),
+  function(req, res) {
+    return res.status(200).json({ data: req.user });
+  }
+);
+
 router.post("/add", userController.create);
 router.post("/signup", userController.signup);
 router.post("/login", userController.login);
