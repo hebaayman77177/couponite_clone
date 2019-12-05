@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const config = require("config");
 const sendEmail = require("../utils/mail");
