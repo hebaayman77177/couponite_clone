@@ -9,7 +9,12 @@ router.get(
   grantAccess("readAny", "systemUser"),
   systemUserController.getUsers
 );
-router.post("/", systemUserController.create);
+router.post(
+  "/",
+  authanticate,
+  grantAccess("readAny", "systemUser"),
+  systemUserController.create
+);
 router.get(
   "/:id",
   authanticate,
