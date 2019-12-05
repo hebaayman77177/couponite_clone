@@ -1,18 +1,19 @@
 const router = require("express").Router();
+const passport = require("passport");
 const userController = require("../controllers/user-controller");
 const authanticate = require("../middlewares/autahnitcate-middleware");
-
-const passport = require("passport");
+const { User } = require("../models/user");
 
 router.get("/auth/facebook", passport.authenticate("facebook"));
 
 router.get(
   "/auth/facebook/callback",
   passport.authenticate("facebook", {
-    failureRedirect: "/auth/facebook/callback"
+    failureRedirect: "/auth/facebook"
   }),
-  function(req, res) {
-    return res.status(200).json({ data: req.user });
+  async function(req, res) {
+    const user = await User.findById(req.user._id);
+    return res.status(200).json({ token: user.generateToken() });
   }
 );
 

@@ -1,0 +1,37 @@
+{
+    "mail": {
+      "options": {
+        "host": "smtp.mailtrap.io",
+        "port": "2525",
+        "auth": {
+          "user": "899acdf487ebd1",
+          "pass": "47851cdc50838a"
+        }
+      }
+    },
+    "mongodb": {
+      "host": "mongodb://127.0.0.1:27017/YallaDealzTest",
+      "settings": {
+        "useNewUrlParser": true,
+        "useUnifiedTopology": true,
+        "useFindAndModify": false,
+        "useCreateIndex": true
+      },
+      "databaseName": ""
+    },
+    "jwt": {
+      "secret": "secret",
+      "options": {
+        "expiresIn": "1h"
+      }
+    },
+    "bcrypt": {
+      "saltRounds": 10
+    },
+    "facebookApp": {
+      "clientID": "283512299242161",
+      "clientSecret": "4d9acae04a8882d50a69a7d2f48af3c4",
+      "callbackURL": "http://localhost:3000/api/user/auth/facebook/callback"
+    }
+  }
+  

@@ -17,7 +17,18 @@ async function create(req, res, next) {
 
 async function login(req, res, next) {
   //check the email and password exist
-  const { email, password, phone } = req.body;
+  const { loginField, password } = req.body;
+  let { email, phone } = req.body;
+
+  if (loginField) {
+    const reg = new RegExp("^[0-9]+$");
+    if (reg.test(loginField)) {
+      phone = loginField;
+    } else {
+      email = loginField;
+    }
+  }
+
   if (!(email || phone) || !password) {
     return res.status(400).json({ message: "some info are invalid" });
   }
@@ -180,7 +191,7 @@ async function forgotPassword(req, res, next) {
       .send({ message: "there is no user with this email" });
   }
   //get the token
-  const resetToken = crypto.randomBytes(32).toString("hex");
+  const resetToken = Token.generateToken(16);
   const token = new Token({
     _userId: user._id,
     token: crypto
@@ -212,10 +223,7 @@ async function forgotPassword(req, res, next) {
 
 async function resetPassword(req, res, next) {
   //get the user of the token
-  let token = crypto
-    .createHash("sha256")
-    .update(req.params.token)
-    .digest("hex");
+  let token = Token.hashToken(req.params.token);
   token = await Token.findOne({ token, type: "password" });
   if (!token)
     return res.status(400).send({
