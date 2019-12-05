@@ -43,7 +43,7 @@ async function login(req, res, next) {
   if (!user || !(await user.verifyPassword(password))) {
     return res.status(400).json({ message: "some info are invalid" });
   }
-  return res.json({
+  return res.status(200).json({
     token: user.generateToken()
   });
 }
@@ -248,7 +248,6 @@ async function resetPassword(req, res, next) {
   });
 }
 
-
 async function changePhone(req, res, next) {
   // //get the token
   const resetToken = crypto.randomBytes(32).toString("hex");
@@ -304,9 +303,8 @@ async function resetPhone(req, res, next) {
 async function getMyInfo(req, res, next) {
   // user must be logged in
   try {
-
     const user = await User.findById(req.user._id);
-    const returnUser = _.omit(user, ['password', 'isVerified', 'role']);
+    const returnUser = _.omit(user, ["password", "isVerified", "role"]);
     return res.json({ user: returnUser });
   } catch (err) {
     next(err);
@@ -315,44 +313,43 @@ async function getMyInfo(req, res, next) {
 
 // edit my data
 async function editMyInfo(req, res, next) {
-
   try {
     let user = await User.findById(req.user._id);
     //const returnUser = _.omit(user, ['password', 'isVerified', 'role']);
-    let newdata = _.omit(
-      req.body,
-      ['email', 'password', 'phone', 'role', 'isVerified', 'facebookId']
-    );
+    let newdata = _.omit(req.body, [
+      "email",
+      "password",
+      "phone",
+      "role",
+      "isVerified",
+      "facebookId"
+    ]);
     /** here set user data, send it and save */
     user.set(newdata);
     await user.save();
 
-    return res.json(
-      { user: _.omit(user,['password', 'role','isVerified']) }
-      );
+    return res.json({ user: _.omit(user, ["password", "role", "isVerified"]) });
   } catch (err) {
     next(err);
   }
 }
 
-
 // change my password
-async function changeMyPasword(req, res, next){
-  //get old password and new password 
+async function changeMyPasword(req, res, next) {
+  //get old password and new password
   // compare old password with one in the data base
   // save the new password hashed
-  const {oldPassword, newPassword} = req.body;
-  try{
+  const { oldPassword, newPassword } = req.body;
+  try {
     let user = await User.findById(req.user._id);
-    if (user.verifyPassword(oldPassword)){
-
+    if (user.verifyPassword(oldPassword)) {
       user.setPassword(newPassword);
-      res.json({message: 'password changed successfully'});
-    }else{
+      res.json({ message: "password changed successfully" });
+    } else {
       res.statusCode = 422;
-      res.json({message: 'please enter valid password'});
+      res.json({ message: "please enter valid password" });
     }
-  }catch(err){
+  } catch (err) {
     next(err);
   }
 }

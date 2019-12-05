@@ -19,6 +19,7 @@
   "homepage": "https://gitlab.com/mokhalifa/yalladealz#readme",
   "dependencies": {
     "@hapi/joi": "^16.1.8",
+    "accesscontrol": "^2.2.1",
     "bcryptjs": "^2.4.3",
     "config": "^3.2.4",
     "debug": "^4.1.1",

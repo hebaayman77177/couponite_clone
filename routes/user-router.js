@@ -3,9 +3,7 @@ const passport = require("passport");
 const userController = require("../controllers/user-controller");
 const authanticate = require("../middlewares/autahnitcate-middleware");
 const { User } = require("../models/user");
-const googleUtils = require('../utils/login-with-google');
-
-const passport = require("passport");
+// const googleUtils = require("../utils/login-with-google");
 
 router.get("/auth/facebook", passport.authenticate("facebook"));
 
@@ -29,15 +27,13 @@ router.post("/forgotPassword", userController.forgotPassword);
 router.get("/resetPassword/:token", userController.resetPassword);
 router.post("/changePhone", authanticate, userController.changePhone);
 router.post("/resetPhone", authanticate, userController.resetPhone);
-router.post("/resetPassword", userController.resetPassword);
-router.post("/changePhone", userController.changePhone);
-router.post("/resetPhone", userController.resetPhone);
+
 
 // owner functionality
 router.get("/myInfo", userController.getMyInfo);
 router.put("/myInfo", userController.editMyInfo);
-touter.put("/myPassword", userController.changeMyPasword);
+router.put("/myPassword", userController.changeMyPasword);
 
-router.get('/auth/google', googleUtils.authenticateWithGoogle);
-router.get('/auth/google/callback', googleUtils.googleCallBack);
+// router.get("/auth/google", googleUtils.authenticateWithGoogle);
+// router.get("/auth/google/callback", googleUtils.googleCallBack);
 module.exports = router;
