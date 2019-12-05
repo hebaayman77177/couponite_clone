@@ -4,7 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+<<<<<<< HEAD
     "test": "jest tests/integration --watch  --verbose",
+||||||| eb01060
+    "test": "echo \"Error: no test specified\" && exit 1",
+=======
+    "test": "jest",
+>>>>>>> 42ebddc03887338c058f77f9a96faa1ea0194f7f
     "start": "nodemon index.js"
   },
   "repository": {
@@ -31,6 +37,7 @@
     "nodemailer": "^6.3.1",
     "passport": "^0.4.0",
     "passport-facebook": "^3.0.0",
+    "passport-google-oauth": "^2.0.0",
     "winston": "^3.2.1",
     "winston-mongodb": "^5.0.1"
   },
@@ -43,7 +50,7 @@
     "eslint-plugin-node": "^10.0.0",
     "eslint-plugin-prettier": "^3.1.1",
     "eslint-plugin-react": "^7.17.0",
-    "jest": "^22.2.2",
+    "jest": "^24.9.0",
     "nodemon": "^2.0.1",
     "prettier": "^1.19.1",
     "supertest": "^4.0.2"

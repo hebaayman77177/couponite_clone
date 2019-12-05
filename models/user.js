@@ -40,7 +40,7 @@ userSchema.methods.verifyPassword = function(password) {
 // generating tokens
 userSchema.methods.generateToken = function() {
   const data = {
-    id: this._id,
+    _id: this._id,
     role: this.role
   };
 
