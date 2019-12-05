@@ -4,13 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-<<<<<<< HEAD
     "test": "jest tests/integration --watch  --verbose",
-||||||| eb01060
-    "test": "echo \"Error: no test specified\" && exit 1",
-=======
-    "test": "jest",
->>>>>>> 42ebddc03887338c058f77f9a96faa1ea0194f7f
     "start": "nodemon index.js"
   },
   "repository": {
