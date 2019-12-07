@@ -5,6 +5,15 @@ const { User } = require("../models/user");
 const FacebookStrategy = strategy.Strategy;
 
 module.exports = () => {
+  passport.serializeUser((user, done) => {
+    done(null, user.id);
+  });
+
+  passport.deserializeUser((id, done) => {
+    User.findById(id).then(user => {
+      done(null, user);
+    });
+  });
   passport.use(
     new FacebookStrategy(
       {
@@ -25,8 +34,8 @@ module.exports = () => {
               username: profile.displayName,
               firstName: profile.name.givenName || profile.displayName,
               lastName: profile.name.familyName,
-              role: "facebookUser",
-              phone: profile.id
+              role: "facebookUser"
+              // phone: profile.id
             })
               .save()
               .then(newUser => {

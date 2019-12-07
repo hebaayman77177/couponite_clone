@@ -54,7 +54,6 @@ userSchema.statics.verifyToken = function(token) {
     const decoded = jwt.verify(token, config.get("jwt.secret"));
     return decoded;
   } catch (err) {
-    //return err;
     return false;
   }
 };

@@ -14,7 +14,11 @@ const roles = (function() {
     .extend("onlyViewUser")
     .createAny("systemUser")
     .updateAny("systemUser")
-    .deleteAny("systemUser");
+    .deleteAny("systemUser")
+    //category
+    .createAny("category")
+    .updateAny("category")
+    .deleteAny("category");
 
   return ac;
 })();
@@ -28,9 +32,7 @@ function grantAccess(action, resource) {
           error: "You don't have enough permission to perform this action"
         });
       }
-      console.log(action);
       if (action.includes("Own")) {
-        console.log("own");
         if (req.user._id !== req.params.id) {
           return res.status(401).json({
             error: "You don't have enough permission to perform this action"

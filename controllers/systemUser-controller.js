@@ -1,34 +1,36 @@
-const crypto = require("crypto");
-const bcrypt = require("bcryptjs");
-const config = require("config");
-const sendEmail = require("../utils/mail");
 const SystemUser = require("../models/systemUser");
-const { Token } = require("../models/token");
-// const { Token } = require("../models/token");
+const {
+  createAndSendToken,
+  changePassword,
+  loginUser
+} = require("../utils/user");
+const { idExist } = require("../validationSchemas");
 
 async function create(req, res, next) {
-  const { email, password, role, phone } = req.body;
+  const { name, email, password, role, phone } = req.body;
   let user;
-  if (email) {
-    user = await SystemUser.findOne({ email });
+  user = await SystemUser.findOne({ email });
+  if (user) {
+    return res.status(400).json({
+      message:
+        "The email you have entered is already associated with another account."
+    });
   }
-  if (phone) {
-    user = await SystemUser.findOne({ phone });
-  }
+  user = await SystemUser.findOne({ phone });
   // Make sure user doesn't already exist
   if (user) {
     return res.status(400).json({
       message:
-        "The email or phone you have entered is already associated with another account."
+        "The phone you have entered is already associated with another account."
     });
   }
-  user = new SystemUser({ email, role, phone });
+  user = new SystemUser({ name, email, role, phone });
   await user.setPassword(password);
   await user.save();
 
   return res.status(200).json({
     message: "the user has been created successfully",
-    data: { email: user.email, role: user.role }
+    data: { name: user.name, email: user.email, role: user.role }
   });
 }
 async function getUsers(req, res, next) {
@@ -45,159 +47,79 @@ async function getUser(req, res, next) {
   });
 }
 async function deleteUser(req, res, next) {
+  const { id } = req.params;
+  const exist = await idExist(id, SystemUser);
+  if (!exist) {
+    return res.status(404).json({ message: "not found" });
+  }
   //TODO: see the diff between remove and delete
-  const user = await SystemUser.findByIdAndRemove(req.params.id);
+  const user = await SystemUser.findByIdAndRemove(id);
   return res.status(200).json({
     user
   });
 }
 async function updateUser(req, res, next) {
-  //TODO: see the diff between remove and delete
-  const user = await SystemUser.findByIdAndUpdate(req.params.id, req.body, {
+  const { id } = req.params;
+  const exist = await idExist(id, SystemUser);
+  if (!exist) {
+    return res.status(404).json({ message: "not found" });
+  }
+  const user = await SystemUser.findByIdAndUpdate(id, req.body, {
     new: true
   });
   return res.status(200).json({
     user
   });
 }
-
 async function login(req, res, next) {
-  //check the email and password exist
-  const { loginField, password } = req.body;
-  let { email, phone } = req.body;
-  if (loginField) {
-    const reg = new RegExp("^[0-9]+$");
-    if (reg.test(loginField)) {
-      phone = loginField;
-    } else {
-      email = loginField;
-    }
-  }
-  if (!password) {
-    return res.status(400).json({ message: "some info are invalid" });
-  }
-  if (!email) {
-    if (!phone) {
-      return res.status(400).json({ message: "some info are invalid" });
-    }
-  }
-  //check if there is a user with  correct password
-  let user;
-  if (email) {
-    user = await SystemUser.findOne({ email: email });
-    // eslint-disable-next-line no-else-return
-  } else if (phone) {
-    user = await SystemUser.findOne({ phone: phone });
-  }
-  if (!user || !(await user.verifyPassword(password))) {
+  const { loginField, password, email, phone } = req.body;
+  const options = { loginField, password, email, phone, Model: SystemUser };
+  const user = await loginUser(options);
+  if (!user) {
     return res.status(400).json({ message: "some info are invalid" });
   }
   return res.status(200).json({
     token: user.generateToken()
   });
 }
-
+//resend the token by the email or phone of the user to the user mail
 async function resendToken(req, res, next) {
-  //TODO:validate that the type exist as if not it will through the error from mongoose
-  const { type, email, phone } = req.body;
-
-  const user = await SystemUser.findOne({
-    $or: [{ email }, { phone }]
-  });
-  if (!user)
-    return res
-      .status(400)
-      .json({ message: "We were unable to find a user with this info." });
-  const resetToken = crypto.randomBytes(32).toString("hex");
-  const token = new Token({
-    _userId: user._id,
-    token: crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex"),
-    type
-  });
-  // Save the verification token
-  await token.save();
-
-  //depending on you want to send it via email or phone add the following code in if condition
-  const mailOptions = {
-    email: user.email,
-    subject: "Account Verification Token",
-    message: resetToken
-  };
-  await sendEmail(mailOptions);
-
-  return res.status(200).send({
-    message: `A verification email has been sent to ${user.email} .`
-  });
-}
-
-async function forgotPassword(req, res, next) {
-  //get the user
-  const user = await SystemUser.findOne({ email: req.body.email });
-  if (!user) {
-    return res
-      .status(400)
-      .send({ message: "there is no user with this email" });
-  }
-  //get the token
-  const resetToken = Token.generateToken(16);
-  const token = new Token({
-    _userId: user._id,
-    token: crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex"),
-    type: "password",
-    extraData: await bcrypt.hash(
-      req.body.password,
-      config.get("bcrypt.saltRounds")
-    )
-  });
-  await token.save();
+  const { email, phone, password } = req.body;
   const resetUrl = `${req.protocol}://${req.get(
     "host"
-  )}/api/user/resetPassword/${resetToken}`;
-  //send the token to the email of the user
-  const options = {
-    email: user.email,
-    subject: "token to reset your password",
-    message: `please go to this url:${resetUrl} to reset your password`
-  };
-  await sendEmail(options);
-
-  return res.status(200).json({
-    message: "Token sent to email!"
+  )}/api/systemUsers/resetPassword/`;
+  const user = new SystemUser();
+  await user.setPassword(password);
+  const sent = await createAndSendToken({
+    type: "password",
+    email,
+    phone,
+    Model: SystemUser,
+    tokenLength: 16,
+    sendBy: "mail",
+    resetUrl,
+    extraData: user.password
+  });
+  if (sent) {
+    return res.status(200).json({
+      message: `A verification email has been sent .`
+    });
+  }
+  return res.status(400).json({
+    message: "there is no user with this info"
   });
 }
-
 async function resetPassword(req, res, next) {
   //get the user of the token
-  let token = Token.hashToken(req.params.token);
-  token = await Token.findOne({ token, type: "password" });
-  if (!token)
-    return res.status(400).send({
-      message:
-        "We were unable to find a valid token. Your token my have expired."
+  const resetToken = req.params.token;
+  const reseted = await changePassword({ resetToken, Model: SystemUser });
+  if (reseted) {
+    return res.status(200).json({
+      message: "the password has been successfully changed"
     });
-
-  const user = await SystemUser.findOne({
-    _id: token._userId
-  });
-  if (!user)
-    return res
-      .status(400)
-      .json({ message: "We were unable to find a user for this token." });
-
-  await SystemUser.findByIdAndUpdate(token._userId, {
-    password: token.extraData
-  });
-  await Token.findOneAndDelete({ _id: token._id });
-
-  return res.status(200).json({
-    status: "success",
-    message: "the password has been successfully changed"
+  }
+  return res.status(400).json({
+    message: "We were unable to find a valid token. Your token my have expired."
   });
 }
 
@@ -209,6 +131,5 @@ module.exports = {
   updateUser,
   login,
   resendToken,
-  forgotPassword,
   resetPassword
 };

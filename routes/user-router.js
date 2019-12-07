@@ -2,19 +2,16 @@ const router = require("express").Router();
 const passport = require("passport");
 const userController = require("../controllers/user-controller");
 const authanticate = require("../middlewares/autahnitcate-middleware");
-const { User } = require("../models/user");
 // const googleUtils = require("../utils/login-with-google");
 
 router.get("/auth/facebook", passport.authenticate("facebook"));
-
+//TODO:add flash here if failer happens
 router.get(
   "/auth/facebook/callback",
-  passport.authenticate("facebook", {
-    failureRedirect: "/auth/facebook"
-  }),
-  async function(req, res) {
-    const user = await User.findById(req.user._id);
-    return res.status(200).json({ token: user.generateToken() });
+  passport.authenticate("facebook", { failureRedirect: "/auth/facebook" }),
+  (req, res) => {
+    const token = req.user.generateToken();
+    return res.status(200).json({ token });
   }
 );
 
@@ -27,7 +24,6 @@ router.post("/forgotPassword", userController.forgotPassword);
 router.get("/resetPassword/:token", userController.resetPassword);
 router.post("/changePhone", authanticate, userController.changePhone);
 router.post("/resetPhone", authanticate, userController.resetPhone);
-
 
 // owner functionality
 router.get("/myInfo", userController.getMyInfo);

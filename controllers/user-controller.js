@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const config = require("config");
+const _ = require("lodash");
 const { User, validate } = require("../models/user");
 const { Token } = require("../models/token");
 const sendEmail = require("../utils/mail");

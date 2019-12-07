@@ -4,6 +4,7 @@ const passport = require("passport");
 const errorHandler = require("../middlewares/error-middleware");
 const userRouter = require("../routes/user-router");
 const systemUserRouter = require("../routes/systemUser-router");
+const categoryRouter = require("../routes/category-router");
 
 //const notfound = require('../middleware/notfound-middleware');
 
@@ -17,6 +18,7 @@ module.exports = function(app) {
 
   app.use("/api/user", userRouter);
   app.use("/api/systemUsers", systemUserRouter);
+  app.use("/api/categories", categoryRouter);
   //app.use(notfound);
   app.use(errorHandler);
 };
