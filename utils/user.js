@@ -70,13 +70,16 @@ async function loginUser(options) {
   }
   //check if there is a user with  correct password
   let user;
+  console.log(options);
   if (email) {
     user = await Model.findOne({ email: email });
     // eslint-disable-next-line no-else-return
   } else if (phone) {
     user = await Model.findOne({ phone: phone });
   }
+  console.log("user",user);
   if (!user || !(await user.verifyPassword(password))) {
+    console.log("here");
     return false;
   }
   return user;

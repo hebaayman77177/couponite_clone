@@ -52,7 +52,6 @@ async function deleteUser(req, res, next) {
   if (!exist) {
     return res.status(404).json({ message: "not found" });
   }
-  //TODO: see the diff between remove and delete
   const user = await SystemUser.findByIdAndRemove(id);
   return res.status(200).json({
     user
