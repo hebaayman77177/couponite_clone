@@ -62,7 +62,6 @@ const categoryPost = Joi.object({
     .max(30)
     .required(),
   parent: Joi.objectId(),
-  ancestors: Joi.array().items(Joi.objectId()),
   description: Joi.array().items(Joi.array().items(Joi.string())),
   metaDescription: Joi.array().items(Joi.array().items(Joi.string())),
   tags: Joi.array().items(Joi.string())
@@ -73,7 +72,6 @@ const categoryUpdate = Joi.object({
     .min(3)
     .max(30),
   parent: Joi.objectId(),
-  ancestors: Joi.array().items(Joi.objectId()),
   description: Joi.array().items(Joi.array().items(Joi.string())),
   metaDescription: Joi.array().items(Joi.array().items(Joi.string())),
   tags: Joi.array().items(Joi.string())

@@ -7,10 +7,11 @@ const categorySchema = new mongoose.Schema({
     ref: "category"
   },
   ancestors: [
-    {
-      type: mongoose.Schema.ObjectId,
-      ref: "category"
-    }
+    mongoose.Schema({
+      name: String,
+      slug: [String],
+      parent: mongoose.Schema.ObjectId
+    })
   ],
   description: [[String, String]],
   metaDescription: [[String, String]],
