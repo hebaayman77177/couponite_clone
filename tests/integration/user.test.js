@@ -161,98 +161,98 @@ describe("/api/user", async () => {
       expect(updatedUser.phone).toBe(user.phone);
     });
   });
-  describe("sigup controller", () => {
-    let user = {
-      firstName: "mahmoud",
-      lastName: "nassif",
-      email: "mahmoudnassifptp39@gmail.com",
-      password: "123",
-      phone: 10,
-      role: "user",
-      isVerified: "false",
-      address: { country: "egypt", city: "cairo" }
-    };
-    it("should return 422 if req.body is invalid", async () => {
-      const res = await request(server)
-        .post("/api/user/signup")
-        .send({});
-      expect(res.status).toBe(422);
-    });
+  // describe("sigup controller", () => {
+  //   let user = {
+  //     firstName: "mahmoud",
+  //     lastName: "nassif",
+  //     email: "mahmoudnassifptp39@gmail.com",
+  //     password: "123",
+  //     phone: 10,
+  //     role: "user",
+  //     isVerified: "false",
+  //     address: { country: "egypt", city: "cairo" }
+  //   };
+  //   it("should return 422 if req.body is invalid", async () => {
+  //     const res = await request(server)
+  //       .post("/api/user/signup")
+  //       .send({});
+  //     expect(res.status).toBe(422);
+  //   });
 
-    it("should return 400 if duplicate email is passed", async () => {
-      await User.create(user);
-      const res = await request(server)
-        .post("/api/user/signup")
-        .send(user);
-      expect(res.status).toBe(400);
-    });
+  //   it("should return 400 if duplicate email is passed", async () => {
+  //     await User.create(user);
+  //     const res = await request(server)
+  //       .post("/api/user/signup")
+  //       .send(user);
+  //     expect(res.status).toBe(400);
+  //   });
 
-    it("should populate the user db with user", async () => {
-      await request(server)
-        .post("/api/user/signup")
-        .send(user);
-      const res = await User.find({ email: user.email });
-      expect(res.some(u => user.firstName === "mahmoud")).toBeTruthy();
-    });
+  //   it("should populate the user db with user", async () => {
+  //     await request(server)
+  //       .post("/api/user/signup")
+  //       .send(user);
+  //     const res = await User.find({ email: user.email });
+  //     expect(res.some(u => user.firstName === "mahmoud")).toBeTruthy();
+  //   });
 
-    it("should populate the token db with token", async () => {
-      await request(server)
-        .post("/api/user/signup")
-        .send(user);
-      const res = await Token.find({});
-      expect(res.length).toBe(1);
-    });
-    //TODO:should make sure that send email method is called
-    it("should return 200 if all is done", async () => {
-      const res = await request(server)
-        .post("/api/user/signup")
-        .send(user);
-      expect(res.status).toBe(200);
-    });
-  });
+  //   it("should populate the token db with token", async () => {
+  //     await request(server)
+  //       .post("/api/user/signup")
+  //       .send(user);
+  //     const res = await Token.find({});
+  //     expect(res.length).toBe(1);
+  //   });
+  //   //TODO:should make sure that send email method is called
+  //   it("should return 200 if all is done", async () => {
+  //     const res = await request(server)
+  //       .post("/api/user/signup")
+  //       .send(user);
+  //     expect(res.status).toBe(200);
+  //   });
+  // });
 
-  describe("login controller", () => {
-    let loginUser = {
-      email: "mahmoudnassifptp39@gmail.com",
-      password: "123",
-      phone: 10
-    };
-    let user = {
-      firstName: "mahmoud",
-      lastName: "nassif",
-      email: "mahmoudnassifptp39@gmail.com",
-      password: "123",
-      phone: 10,
-      role: "user",
-      isVerified: "false",
-      address: { country: "egypt", city: "cairo" }
-    };
+  // describe("login controller", () => {
+  //   let loginUser = {
+  //     email: "mahmoudnassifptp39@gmail.com",
+  //     password: "123",
+  //     phone: 10
+  //   };
+  //   let user = {
+  //     firstName: "mahmoud",
+  //     lastName: "nassif",
+  //     email: "mahmoudnassifptp39@gmail.com",
+  //     password: "123",
+  //     phone: 10,
+  //     role: "user",
+  //     isVerified: "false",
+  //     address: { country: "egypt", city: "cairo" }
+  //   };
 
-    it("should return 400 if no email or password passed", async () => {
-      const res = await request(server)
-        .post("/api/user/login")
-        .send({});
-      expect(res.status).toBe(400);
-    });
+  //   it("should return 400 if no email or password passed", async () => {
+  //     const res = await request(server)
+  //       .post("/api/user/login")
+  //       .send({});
+  //     expect(res.status).toBe(400);
+  //   });
 
-    it("should return 401 if no such user with email passed", async () => {
-      const res = await request(server)
-        .post("/api/user/login")
-        .send({ email: "test@test", password: "123" });
-      expect(res.status).toBe(400);
-    });
+  //   it("should return 401 if no such user with email passed", async () => {
+  //     const res = await request(server)
+  //       .post("/api/user/login")
+  //       .send({ email: "test@test", password: "123" });
+  //     expect(res.status).toBe(400);
+  //   });
 
-    it("should return 400 if password is incorrect", async () => {
-      await User.create(user);
-      const res = await request(server)
-        .post("/api/user/login")
-        .send({ email: "mahmoudnassifptp39@gmail.com", password: "xxx" });
-      expect(res.status).toBe(400);
-    });
-    // it('should return 200 if email and password are correct',async()=>{
-    //     await User.create(user)
-    //     const res=await request(server).post('/api/user/login').send(loginUser)
-    //     expect(res.status).toBe(200)
-    // })
-  });
+  //   it("should return 400 if password is incorrect", async () => {
+  //     await User.create(user);
+  //     const res = await request(server)
+  //       .post("/api/user/login")
+  //       .send({ email: "mahmoudnassifptp39@gmail.com", password: "xxx" });
+  //     expect(res.status).toBe(400);
+  //   });
+  //   // it('should return 200 if email and password are correct',async()=>{
+  //   //     await User.create(user)
+  //   //     const res=await request(server).post('/api/user/login').send(loginUser)
+  //   //     expect(res.status).toBe(200)
+  //   // })
+  // });
 });

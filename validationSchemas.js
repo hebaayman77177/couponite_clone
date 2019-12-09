@@ -76,6 +76,24 @@ const categoryUpdate = Joi.object({
   metaDescription: Joi.array().items(Joi.array().items(Joi.string())),
   tags: Joi.array().items(Joi.string())
 });
+const dealPost = Joi.alternatives().conditional(
+  Joi.object({ type: "travel" }).unknown(),
+  {
+    then: Joi.object({
+      color: Joi.forbidden(),
+      size: Joi.forbidden(),
+      category: Joi.object({ id: Joi.objectId().required() })
+        .required()
+        .unknown()
+    }).unknown(),
+    otherwise: Joi.object({
+      dayRoom: Joi.forbidden(),
+      category: Joi.object({ id: Joi.objectId().required() })
+        .required()
+        .unknown()
+    }).unknown()
+  }
+);
 //global
 const mongoId = Joi.object({
   id: Joi.objectId()
@@ -107,6 +125,8 @@ const schemas = {
   //category
   categoryPost,
   categoryUpdate,
+  //deal
+  dealPost,
   //golbal
   mongoId,
   idExist,

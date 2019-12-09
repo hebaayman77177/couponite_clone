@@ -15,7 +15,7 @@ router.get(
   }
 );
 
-router.post("/add", userController.create);
+// router.post("/add", userController.create);
 router.post("/signup", userController.signup);
 router.post("/login", userController.login);
 router.post("/confirmToken", userController.confirmToken);
@@ -26,9 +26,9 @@ router.post("/changePhone", authanticate, userController.changePhone);
 router.post("/resetPhone", authanticate, userController.resetPhone);
 
 // owner functionality
-router.get("/myInfo", userController.getMyInfo);
-router.put("/myInfo", userController.editMyInfo);
-router.put("/myPassword", userController.changeMyPasword);
+// router.get("/myInfo", userController.getMyInfo);
+// router.put("/myInfo", userController.editMyInfo);
+// router.put("/myPassword", userController.changeMyPasword);
 
 // router.get("/auth/google", googleUtils.authenticateWithGoogle);
 // router.get("/auth/google/callback", googleUtils.googleCallBack);

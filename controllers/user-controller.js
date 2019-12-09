@@ -6,15 +6,15 @@ const { User, validate } = require("../models/user");
 const { Token } = require("../models/token");
 const sendEmail = require("../utils/mail");
 
-async function create(req, res, next) {
-  const result = validate(req);
-  if (result.error) {
-    res.statusCode = 422;
-    //return res.send(result.error.details[0].message);
-    return res.json(result);
-  }
-  res.json(result);
-}
+// async function create(req, res, next) {
+//   const result = validate(req);
+//   if (result.error) {
+//     res.statusCode = 422;
+//     //return res.send(result.error.details[0].message);
+//     return res.json(result);
+//   }
+//   res.json(result);
+// }
 
 async function login(req, res, next) {
   //check the email and password exist
@@ -67,6 +67,14 @@ async function signup(req, res, next) {
       return res.status(400).json({
         message:
           "The email address you have entered is already associated with another account."
+      });
+    user = await User.findOne({ phone: req.body.phone });
+
+    // Make sure user doesn't already exist
+    if (user)
+      return res.status(400).json({
+        message:
+          "The email phone you have entered is already associated with another account."
       });
 
     // Create and save the user
@@ -253,7 +261,7 @@ async function changePhone(req, res, next) {
   // //get the token
   const resetToken = crypto.randomBytes(32).toString("hex");
   const token = new Token({
-    _userId: req.user.id,
+    _userId: req.user._id,
     token: crypto
       .createHash("sha256")
       .update(resetToken)
@@ -263,7 +271,7 @@ async function changePhone(req, res, next) {
   });
   await token.save();
 
-  const user = await User.findOne({ _id: req.user.id });
+  const user = await User.findOne({ _id: req.user._id });
   //send the token to the email of the user
   const options = {
     email: user.email,
@@ -290,7 +298,9 @@ async function resetPhone(req, res, next) {
         "We were unable to find a valid token. Your token my have expired."
     });
   //TODO:validate the phone before saving
-  await User.findByIdAndUpdate(req.user.id, { phone: token.extraData });
+  await User.findByIdAndUpdate(req.user._id, {
+    phone: token.extraData
+  });
   await Token.findOneAndDelete({ _id: token._id });
 
   return res.status(200).json({
@@ -301,72 +311,72 @@ async function resetPhone(req, res, next) {
 // user functions
 
 // get my data
-async function getMyInfo(req, res, next) {
-  // user must be logged in
-  try {
-    const user = await User.findById(req.user._id);
-    const returnUser = _.omit(user, ["password", "isVerified", "role"]);
-    return res.json({ user: returnUser });
-  } catch (err) {
-    next(err);
-  }
-}
+// async function getMyInfo(req, res, next) {
+//   // user must be logged in
+//   try {
+//     const user = await User.findById(req.user._id);
+//     const returnUser = _.omit(user, ["password", "isVerified", "role"]);
+//     return res.json({ user: returnUser });
+//   } catch (err) {
+//     next(err);
+//   }
+// }
 
-// edit my data
-async function editMyInfo(req, res, next) {
-  try {
-    let user = await User.findById(req.user._id);
-    //const returnUser = _.omit(user, ['password', 'isVerified', 'role']);
-    let newdata = _.omit(req.body, [
-      "email",
-      "password",
-      "phone",
-      "role",
-      "isVerified",
-      "facebookId"
-    ]);
-    /** here set user data, send it and save */
-    user.set(newdata);
-    await user.save();
+// // edit my data
+// async function editMyInfo(req, res, next) {
+//   try {
+//     let user = await User.findById(req.user._id);
+//     //const returnUser = _.omit(user, ['password', 'isVerified', 'role']);
+//     let newdata = _.omit(req.body, [
+//       "email",
+//       "password",
+//       "phone",
+//       "role",
+//       "isVerified",
+//       "facebookId"
+//     ]);
+//     /** here set user data, send it and save */
+//     user.set(newdata);
+//     await user.save();
 
-    return res.json({ user: _.omit(user, ["password", "role", "isVerified"]) });
-  } catch (err) {
-    next(err);
-  }
-}
+//     return res.json({ user: _.omit(user, ["password", "role", "isVerified"]) });
+//   } catch (err) {
+//     next(err);
+//   }
+// }
 
-// change my password
-async function changeMyPasword(req, res, next) {
-  //get old password and new password
-  // compare old password with one in the data base
-  // save the new password hashed
-  const { oldPassword, newPassword } = req.body;
-  try {
-    let user = await User.findById(req.user._id);
-    if (user.verifyPassword(oldPassword)) {
-      user.setPassword(newPassword);
-      res.json({ message: "password changed successfully" });
-    } else {
-      res.statusCode = 422;
-      res.json({ message: "please enter valid password" });
-    }
-  } catch (err) {
-    next(err);
-  }
-}
+// // change my password
+// async function changeMyPasword(req, res, next) {
+//   //get old password and new password
+//   // compare old password with one in the data base
+//   // save the new password hashed
+//   const { oldPassword, newPassword } = req.body;
+//   try {
+//     let user = await User.findById(req.user._id);
+//     if (user.verifyPassword(oldPassword)) {
+//       user.setPassword(newPassword);
+//       res.json({ message: "password changed successfully" });
+//     } else {
+//       res.statusCode = 422;
+//       res.json({ message: "please enter valid password" });
+//     }
+//   } catch (err) {
+//     next(err);
+//   }
+// }
 
 //
 module.exports = {
-  create: create,
-  login: login,
-  signup: signup,
-  confirmToken: confirmToken,
-  resendToken: resendToken,
-  forgotPassword: forgotPassword,
-  resetPassword: resetPassword,
-  changePhone: changePhone,
-  resetPhone: resetPhone,
-  getMyInfo: getMyInfo,
-  editMyInfo: editMyInfo,
-  changeMyPasword: changeMyPasword
+  // create,
+  login,
+  signup,
+  confirmToken,
+  resendToken,
+  forgotPassword,
+  resetPassword,
+  changePhone,
+  resetPhone
+  // getMyInfo,
+  // editMyInfo,
+  // changeMyPasword
 };

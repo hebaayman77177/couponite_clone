@@ -1,3 +1,4 @@
+require("express-async-errors");
 module.exports = function() {
   /**
    * handling uncaught exceptions

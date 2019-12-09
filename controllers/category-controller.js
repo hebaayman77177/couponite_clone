@@ -1,4 +1,4 @@
-const Category = require("../models/category");
+const { Category } = require("../models/category");
 const { idExist } = require("../validationSchemas");
 
 async function buildAncestors(id, parentId) {

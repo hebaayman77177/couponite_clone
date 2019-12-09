@@ -1,4 +1,4 @@
-const Merchant = require("../models/merchant");
+const { Merchant } = require("../models/merchant");
 const { idExist } = require("../validationSchemas");
 const {
   createAndSendToken,

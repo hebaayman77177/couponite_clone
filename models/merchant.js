@@ -39,7 +39,7 @@ const merchantSchema = new mongoose.Schema({
     enum: ["Free", "Premium"]
   },
   branches: [
-    mongoose.Schema({
+    {
       id: mongoose.Schema.ObjectId,
       AdressText: [String],
       AdressAPI: {
@@ -53,9 +53,9 @@ const merchantSchema = new mongoose.Schema({
         address: String,
         description: String
       }
-    })
+    }
   ],
-  contactPerson: mongoose.Schema({
+  contactPerson: {
     contactName: String,
     jobTitle: String,
     phone: String,
@@ -64,6 +64,10 @@ const merchantSchema = new mongoose.Schema({
       type: String,
       enum: ["cheque", "bankTransfere", "cashCollection"]
     }
+  },
+  category: mongoose.Schema({
+    id: mongoose.Schema.ObjectId,
+    name: String
   }),
   createdAt: Date,
   updatedAt: Date,
@@ -103,6 +107,6 @@ merchantSchema.statics.verifyToken = function(token) {
     return false;
   }
 };
-const SystemUser = mongoose.model("merchant", merchantSchema);
+const Merchant = mongoose.model("merchant", merchantSchema);
 
-module.exports = SystemUser;
+module.exports = { Merchant, merchantSchema };
