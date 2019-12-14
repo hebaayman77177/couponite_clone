@@ -1,8 +1,9 @@
-# Yalla Dealz Backend Project
+# Yalla Dealz Backend Project Scope.
 
 Project In-Scope:
 
-The Business Workflow: The e-Commerce is based on making deals through the registered "Merchants" as a form of "Coupon" which has a start and end date. The "User" (Buyer) will buy these coupons after registering in the system first. He will pay online (credit-card) through the website "Payment Gateway". Once payment is done successfully, the buyer will receive an "Email Notification" which has the Coupon code and the details of the coupon deal. Finally, the buyer can print this coupon and redeem his offer at the Merchant's venue. The website Owner then shares the profit with the Merchant as agreed on the commission basis. The system also enables the Buyers to share Deals (Coupons), and get shares of profit for successful purchases by their references.
+The Business Workflow:
+The GroupBuying is based on making deals through the registered "Merchants" as a form of "Coupon" which has a start and end date. The "User" (Buyer) will buy these coupons after registering in the system first. He will pay online (credit-card) through the website "Payment Gateway". Once payment is done successfully, the buyer will receive an "Email Notification" which has the Coupon code and the details of the coupon deal. Finally, the buyer can print this coupon and redeem his offer at the Merchant's venue. The website Owner then shares the profit with the Merchant as agreed on the commission basis. The system also enables the Buyers to share Deals (Coupons), and get shares of profit for successful purchases by their references.
 The System Components: As described above, the system will have the following main components that form the desired GroupBuying system
 
 Merchants: The one who creates the deals/coupons in the system, and set the price, and the deals start and end dates. The Merchant can register online, and submit all the required data, once registered the system owner will receive an email notification of merchant registration and then can activate/deactivate the merchant account. Once activated, the registered merchant will receive a notification of successful activation.
