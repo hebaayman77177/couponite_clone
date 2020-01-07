@@ -37,6 +37,7 @@ async function buildSubgraph(root) {
 }
 async function updateNodeAndDescendants(nodesByParent, node, parent) {
   parent = await Category.findById(parent);
+  // eslint-disable-next-line prefer-destructuring
   const ancestors = parent.ancestors;
   ancestors.push([{ _id: parent._id, slug: parent.slug, name: parent.name }]);
   node = await Category.findByIdAndUpdate(

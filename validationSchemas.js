@@ -94,6 +94,9 @@ const dealPost = Joi.alternatives().conditional(
     }).unknown()
   }
 );
+const changePhone = Joi.object({
+  phone: Joi.string().pattern(/^01[0125]\d{8,8}$/).required()
+});
 //global
 const mongoId = Joi.object({
   id: Joi.objectId()
@@ -127,6 +130,8 @@ const schemas = {
   categoryUpdate,
   //deal
   dealPost,
+  //user
+  changePhone,
   //golbal
   mongoId,
   idExist,

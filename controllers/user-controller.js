@@ -98,14 +98,16 @@ async function signup(req, res, next) {
     });
     // Save the verification token
     await token.save();
-
+    const resetUrl = `${req.protocol}://${req.get(
+      "host"
+    )}/api/user/confirmToken/${resetToken}?email=${user.email}`;
+    //send the token to the email of the user
     const options = {
       email: user.email,
-      subject: "Account Verification Token",
-      message: resetToken
+      subject: "token to reset your password",
+      html: `<p>please go to this<a href=${resetUrl}> url </a>to reset your password</p>`
     };
     await sendEmail(options);
-
     return res.status(200).json({
       message: `A verification email has been sent to ${user.email} `
     });
@@ -118,7 +120,7 @@ async function confirmToken(req, res, next) {
   // Find a matching token
   const retoken = crypto
     .createHash("sha256")
-    .update(req.body.token)
+    .update(req.params.token)
     .digest("hex");
   const token = await Token.findOne({ token: retoken, type: "login" });
   if (!token)
@@ -129,7 +131,7 @@ async function confirmToken(req, res, next) {
   // If we found a token, find a matching user
   const user = await User.findOne({
     _id: token._userId,
-    email: req.body.email
+    email: req.query.email
   });
 
   if (!user)
@@ -259,7 +261,7 @@ async function resetPassword(req, res, next) {
 
 async function changePhone(req, res, next) {
   // //get the token
-  const resetToken = crypto.randomBytes(32).toString("hex");
+  const resetToken = crypto.randomBytes(3).toString("hex");
   const token = new Token({
     _userId: req.user._id,
     token: crypto
@@ -291,7 +293,7 @@ async function resetPhone(req, res, next) {
     .createHash("sha256")
     .update(verificationToken)
     .digest("hex");
-  token = await Token.findOne({ token, type: "phone" });
+  token = await Token.findOne({ token, type: "phone", _userId: req.user._id });
   if (!token)
     return res.status(400).json({
       message:
@@ -305,6 +307,80 @@ async function resetPhone(req, res, next) {
 
   return res.status(200).json({
     message: "the phone has been successfully changed"
+  });
+}
+
+async function addToCart(req, res, next) {
+  const dealViewToCart = {
+    deal_id: req.body.deal_id,
+    item_id: req.body.item_id,
+    quantity: req.body.quantity || 1,
+    itemPrice: req.body.itemPrice
+  };
+  await User.update(
+    { _id: req.user._id },
+    {
+      $push: { cart: dealViewToCart },
+      $inc: {
+        cartTotalPrice: dealViewToCart.itemPrice * dealViewToCart.quantity
+      }
+    }
+  );
+  return res.status(200).json({
+    message: "the item has been added",
+    data: dealViewToCart
+  });
+}
+async function cartChangeNumberOfItem(req, res, next) {
+  await User.update(
+    {
+      _id: req.user._id,
+      "cart.deal_id": req.body.deal_id,
+      "cart.item_id": req.body.item_id
+    },
+    { $set: { "cart.$.quantity": req.body.quantity } }
+  );
+
+  await User.update(
+    { _id: req.user._id },
+    {
+      $set: {
+        cartTotalPrice:
+          req.body.cartTotal +
+          req.body.itemPrice * req.body.quantity -
+          req.body.itemPrice * req.body.beforeQuantity
+      }
+    }
+  );
+  return res.status(200).json({
+    message: "the item has been changed"
+  });
+}
+async function cartDeleteItem(req, res, next) {
+  await User.update(
+    { _id: req.user._id },
+    {
+      $pull: { cart: { deal_id: req.body.deal_id, item_id: req.body.item_id } }
+    },
+    { safe: true, multi: true }
+  );
+  await User.update(
+    { _id: req.user._id },
+    {
+      $inc: {
+        cartTotalPrice: -1 * req.body.itemPrice * req.body.quantity
+      }
+    }
+  );
+
+  return res.status(200).json({
+    message: "the item has been deleted"
+  });
+}
+async function makeCartEmpty(req, res, next) {
+  await User.update({ _id: req.user._id }, { cart: [], cartTotalPrice: 0 });
+  return res.status(200).json({
+    message: "the cart is empty"
   });
 }
 
@@ -375,7 +451,11 @@ module.exports = {
   forgotPassword,
   resetPassword,
   changePhone,
-  resetPhone
+  resetPhone,
+  addToCart,
+  cartChangeNumberOfItem,
+  cartDeleteItem,
+  makeCartEmpty
   // getMyInfo,
   // editMyInfo,
   // changeMyPasword

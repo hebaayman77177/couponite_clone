@@ -41,35 +41,52 @@ const dealSchema = new mongoose.Schema({
     slug: [String],
     ancestors: [String]
   },
-  quantity: Number,
   dealStartDate: Date,
   dealEndDate: Date,
-  originalPrice: Number,
-  finalPrice: Number,
-  merchantPersentage: Number, ////////// could be deleted
-  yallaDealzPersentage: Number,
   visible: Boolean,
-  createdAt: Date,
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
   updatedAt: Date,
   //   maxCoupon: Number,
   minBuy: Number,
   maxBuy: Number,
   //enum
   paymentType: String,
-  youtubeLink: String,
-  reviewRate: Number,
-
-  couponValidFrom: Date,
-  couponValidTo: Date,
   liveDeal: Boolean,
+  item: [
+    new mongoose.Schema({
+      type: String,
+      quantity: Number,
+      originalPrice: Number,
+      finalPrice: Number,
+      merchantPersentage: Number, ////////// could be deleted
+      yallaDealzPersentage: Number,
+      visible: Boolean,
+      minBuy: Number,
+      maxBuy: Number,
+      createdAt: {
+        type: Date,
+        default: Date.now
+      },
+      updatedAt: Date,
+      youtubeLink: String,
+      reviewRate: Number,
+      couponValidFrom: Date,
+      couponValidTo: Date,
+      size: [String],
+      color: [String],
+      dayRoom: [
+        new mongoose.Schema({ Day: Date, roomsNumber: Number, price: Number })
+      ],
+      for: {
+        type: String,
+        enum: ["men", "women", "children", "teenagers"]
+      }
+    })
+  ],
 
-  size: [Number],
-  color: [String],
-  dayRoom: [{ Day: Date, roomsNumber: Number }],
-  for: {
-    type: String,
-    enum: ["men", "women", "children", "teenagers"]
-  },
   mainDescription: String,
   mainMetaDescription: String,
   mainMetaKeywords: String,

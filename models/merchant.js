@@ -65,10 +65,10 @@ const merchantSchema = new mongoose.Schema({
       enum: ["cheque", "bankTransfere", "cashCollection"]
     }
   },
-  category: mongoose.Schema({
+  category: {
     id: mongoose.Schema.ObjectId,
     name: String
-  }),
+  },
   createdAt: Date,
   updatedAt: Date,
   image: String,

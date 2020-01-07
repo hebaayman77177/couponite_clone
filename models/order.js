@@ -7,6 +7,13 @@ const orderSchema = new mongoose.Schema({
   },
   customer: mongoose.Schema.ObjectId,
   deal: mongoose.Schema.ObjectId,
+  //the id of the item option in the deal
+  type: String,
+  item: mongoose.Schema.ObjectId,
+  // the id of the day id in case of hotels deals
+  day: mongoose.Schema.ObjectId,
+  color: String,
+  size: String,
   quantity: Number,
   itemPrice: Number,
   //enum

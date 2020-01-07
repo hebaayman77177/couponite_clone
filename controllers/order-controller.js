@@ -2,6 +2,7 @@ const { Order } = require("../models/order");
 const { idExist } = require("../validationSchemas");
 
 async function createOrder(req, res, next) {
+  //create the order
   const order = await Order.create(req.body);
   return res.status(200).json({
     message: "the order has been created successfully",

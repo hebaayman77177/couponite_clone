@@ -24,7 +24,20 @@ const userSchema = new mongoose.Schema({
   birthDate: Date,
   job: String,
   role: { type: String, default: "user" },
-  isVerified: { type: Boolean, default: false }
+  isVerified: { type: Boolean, default: false },
+  //the cart is arry of deals items
+  cart: [
+    {
+      deal_id: mongoose.Schema.ObjectId,
+      item_id: mongoose.Schema.ObjectId,
+      quantity: Number,
+      itemPrice: Number
+    }
+  ],
+  cartTotalPrice: {
+    type: Number,
+    default: 0
+  }
 });
 
 // hashing the password
