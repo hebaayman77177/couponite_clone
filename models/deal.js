@@ -3,7 +3,9 @@ const moment = require("moment");
 
 const dealSchema = new mongoose.Schema({
   //TODO: shoud be enum depending on the type
+  //ex:food,cloth,hotel
   type: String,
+
   merchant: {
     name: String,
     id: mongoose.Schema.ObjectId,
@@ -36,54 +38,60 @@ const dealSchema = new mongoose.Schema({
       }
     ]
   },
+
   category: {
     name: String,
     slug: [String],
     ancestors: [String]
   },
-  dealStartDate: Date,
+
+  dealStartDate: {
+    type: Date,
+    default: Date.now
+  },
   dealEndDate: Date,
+
   visible: Boolean,
+
   createdAt: {
     type: Date,
     default: Date.now
   },
   updatedAt: Date,
-  //   maxCoupon: Number,
-  minBuy: Number,
-  maxBuy: Number,
+
+  minBuy: {type:Number,default:1},
+  maxBuy: {type:Number,default:Infinity },
+
   //enum
   paymentType: String,
-  liveDeal: Boolean,
+
+  liveDeal: Boolean, //?
+
+  merchantPersentage: Number, ////////// could be deleted
+  yallaDealzPersentage: Number,
+
+  couponValidFrom: Date,
+  couponValidTo: Date,
+
+  youtubeLink: String,
+  reviewRate: Number,
+
+  for: {
+    type: String,
+    enum: ["men", "women", "children", "teenagers"]
+  },
+
+  totalQuantity: Number,
+
   item: [
     new mongoose.Schema({
-      type: String,
-      quantity: Number,
+      quantity: {type:Number,default:Infinity },
       originalPrice: Number,
       finalPrice: Number,
-      merchantPersentage: Number, ////////// could be deleted
-      yallaDealzPersentage: Number,
-      visible: Boolean,
-      minBuy: Number,
-      maxBuy: Number,
-      createdAt: {
-        type: Date,
-        default: Date.now
-      },
-      updatedAt: Date,
-      youtubeLink: String,
-      reviewRate: Number,
-      couponValidFrom: Date,
-      couponValidTo: Date,
-      size: [String],
-      color: [String],
-      dayRoom: [
-        new mongoose.Schema({ Day: Date, roomsNumber: Number, price: Number })
-      ],
-      for: {
-        type: String,
-        enum: ["men", "women", "children", "teenagers"]
-      }
+
+      size: String,
+      color: String,
+      Day: Date
     })
   ],
 

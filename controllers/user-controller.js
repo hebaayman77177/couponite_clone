@@ -4,6 +4,7 @@ const config = require("config");
 const _ = require("lodash");
 const { User, validate } = require("../models/user");
 const { Token } = require("../models/token");
+const { Deal } = require("../models/deal");
 const sendEmail = require("../utils/mail");
 
 // async function create(req, res, next) {
@@ -384,6 +385,79 @@ async function makeCartEmpty(req, res, next) {
   });
 }
 
+//check the validation of items before buying
+async function checkCartItems(req, res, next) {
+  let cart = await User.findById(req.user._id).select("cart");
+  cart = cart.cart;
+  console.log("cart",cart);
+  let deal;
+  let dealItem;
+
+  // {
+  //   notValid,
+  //   minBuy:,
+  //   maxBuy:,
+  //   quantityAvailable:,
+  //   priceChanged:
+  // }
+  //problems is array of the above object for each order in the cart if the object
+  //is empty then there is no problem
+  const problems = [];
+  let problem;
+  let isThereProblem = false;
+
+  // eslint-disable-next-line no-restricted-syntax
+  for (let order of cart) {
+    // console.log("order",order);
+    problem = {};
+    // eslint-disable-next-line no-await-in-loop
+    deal = await Deal.findById(order.deal_id );
+    // console.log("deal",deal);
+    // eslint-disable-next-line no-restricted-syntax
+    for (let item of deal.item) {
+      // console.log("item",item);
+      if (item._id === order.item_id) {
+        // console.log("here");
+        dealItem = item;
+        break;
+      }
+    }
+    // console.log("dealItem",dealItem);
+
+    if (
+      (deal.dealEndDate && deal.dealEndDate < new Date()) ||
+      deal.dealStartDate > new Date() ||
+      (deal.visible && deal.visible === false)
+    ) {
+      problem.notValid = true;
+    } else if (order.itemPrice !== dealItem.finalPrice) {
+      problem.priceChanged = dealItem.finalPrice;
+    } else {
+      if (order.quantity < deal.minBuy) {
+        problem.minBuy = deal.minBuy;
+      }
+      if (order.quantity > deal.minBuy) {
+        problem.maxBuy = deal.maxBuy;
+      }
+      if (order.quantity > dealItem.quantity) {
+        problem.quantityAvailable = dealItem.quantity;
+      }
+    }
+    if (problem !== {}) {
+      isThereProblem = true;
+    }
+    problems.push(problem);
+  }
+
+  //1-check that the order items is less than the quantity of the items in the deal
+
+  return res.status(200).json({
+    data: {
+      isThereProblem,
+      problems
+    }
+  });
+}
 // user functions
 
 // get my data
@@ -455,7 +529,8 @@ module.exports = {
   addToCart,
   cartChangeNumberOfItem,
   cartDeleteItem,
-  makeCartEmpty
+  makeCartEmpty,
+  checkCartItems
   // getMyInfo,
   // editMyInfo,
   // changeMyPasword

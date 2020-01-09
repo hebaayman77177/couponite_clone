@@ -7,13 +7,8 @@ const orderSchema = new mongoose.Schema({
   },
   customer: mongoose.Schema.ObjectId,
   deal: mongoose.Schema.ObjectId,
-  //the id of the item option in the deal
-  type: String,
   item: mongoose.Schema.ObjectId,
-  // the id of the day id in case of hotels deals
-  day: mongoose.Schema.ObjectId,
-  color: String,
-  size: String,
+
   quantity: Number,
   itemPrice: Number,
   //enum
@@ -22,24 +17,36 @@ const orderSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  yallaDealzPersentage: Number
+  yallaDealzPersentage: Number,
+  totalPrice: Number,
+  yallDealzTotal: Number,
+  merchantTotal: Number
 });
 
 orderSchema.set("toObject", { virtuals: true });
 orderSchema.set("toJSON", { virtuals: true });
 
-orderSchema.virtual("totalPrice").get(function() {
-  return this.quantity * this.itemPrice;
-});
-orderSchema.virtual("yallDealzTotal").get(function() {
-  return this.quantity * this.itemPrice * this.yallaDealzPersentage;
-});
-orderSchema.virtual("merchantTotal").get(function() {
-  return (
+orderSchema.pre("save", function(next) {
+  this.totalPrice = this.quantity * this.itemPrice;
+  this.yallDealzTotal =
+    this.quantity * this.itemPrice * this.yallaDealzPersentage;
+  this.merchantTotal =
     this.quantity * this.itemPrice -
-    this.quantity * this.itemPrice * this.yallaDealzPersentage
-  );
+    this.quantity * this.itemPrice * this.yallaDealzPersentage;
+  next();
 });
+// orderSchema.virtual("totalPrice").get(function() {
+//   return this.quantity * this.itemPrice;
+// });
+// orderSchema.virtual("yallDealzTotal").set(function() {
+//   return this.quantity * this.itemPrice * this.yallaDealzPersentage;
+// });
+// orderSchema.virtual("merchantTotal").set(function() {
+//   return (
+//     this.quantity * this.itemPrice -
+//     this.quantity * this.itemPrice * this.yallaDealzPersentage
+//   );
+// });
 
 const Order = mongoose.model("order", orderSchema);
 

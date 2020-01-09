@@ -1,5 +1,6 @@
 const { Deal } = require("../models/deal");
 const { idExist } = require("../validationSchemas");
+const { ApiSearch }=require("../utils/apiSearch");
 
 async function createDeal(req, res, next) {
   const deal = await Deal.create(req.body);
@@ -9,7 +10,13 @@ async function createDeal(req, res, next) {
   });
 }
 async function getDeals(req, res, next) {
-  const deals = await Deal.find();
+  const apiSearch = new ApiSearch(Deal.find({}), req.query);
+  const deals = await apiSearch
+    .filter()
+    .sort()
+    .limit()
+    .paginate().query;
+
   return res.status(200).json({
     length: deals.length,
     deals
