@@ -47,20 +47,20 @@ const dealSchema = new mongoose.Schema({
 
   dealStartDate: {
     type: Date,
-    default: Date.now
+    default: new Date()
   },
-  dealEndDate: Date,
+  dealEndDate: { type: Date, default: new Date("4000-01-01T00:00:00Z") },
 
-  visible: Boolean,
+  visible: { type: Boolean, default: true },
 
   createdAt: {
     type: Date,
-    default: Date.now
+    default: new Date()
   },
   updatedAt: Date,
 
-  minBuy: {type:Number,default:1},
-  maxBuy: {type:Number,default:Infinity },
+  minBuy: { type: Number, default: 1 },
+  maxBuy: { type: Number, default: Infinity },
 
   //enum
   paymentType: String,
@@ -85,7 +85,7 @@ const dealSchema = new mongoose.Schema({
 
   item: [
     new mongoose.Schema({
-      quantity: {type:Number,default:Infinity },
+      quantity: { type: Number, default: Infinity },
       originalPrice: Number,
       finalPrice: Number,
 

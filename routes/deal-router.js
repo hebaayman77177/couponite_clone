@@ -10,6 +10,12 @@ router.post(
 );
 router.get("/", dealController.getDeals);
 router.get(
+  "/customerDeals",
+  dealController.secureSearchMiddleware,
+  dealController.customersSearchMiddleware,
+  dealController.getDeals
+);
+router.get(
   "/:id",
   validate(validationSchemas.mongoId, "params"),
   dealController.getDeal

@@ -40,6 +40,9 @@ router.post(
 router.post("/cartDeleteItem", authanticate, userController.cartDeleteItem);
 router.delete("/makeCartEmpty", authanticate, userController.makeCartEmpty);
 router.get("/checkCartItems", authanticate, userController.checkCartItems);
+router.get("/buyCartItems", authanticate, userController.buyCartItems);
+router.get("/fawryPaymentDone", authanticate, userController.fawryPaymentDone);
+
 // owner functionality
 // router.get("/myInfo", userController.getMyInfo);
 // router.put("/myInfo", userController.editMyInfo);

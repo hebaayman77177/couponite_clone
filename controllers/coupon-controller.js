@@ -46,10 +46,28 @@ async function updateCoupon(req, res, next) {
   });
 }
 
+async function useCoupon(req, res, next) {
+  //get the order id of cpubons to use from the body
+  //update the active coupon to be used
+
+  const orderId = req.body.orderId;
+  const coupon = await Coupon.findOneAndUpdate(
+    { order: orderId, status: "active" },
+    { status: "used" },
+    {
+      new: true
+    }
+  );
+  return res.status(200).json({
+    coupon
+  });
+}
+
 module.exports = {
   createCoupon,
   getCoupons,
   updateCoupon,
   deleteCoupon,
-  getCoupon
+  getCoupon,
+  useCoupon
 };

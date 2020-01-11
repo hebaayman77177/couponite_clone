@@ -1,10 +1,14 @@
+/* eslint-disable no-restricted-syntax */
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const config = require("config");
+const Fawn = require("fawn");
 const _ = require("lodash");
 const { User, validate } = require("../models/user");
 const { Token } = require("../models/token");
 const { Deal } = require("../models/deal");
+const { TempCart } = require("../models/tempCart");
+const { Coupon } = require("../models/coupon");
 const sendEmail = require("../utils/mail");
 
 // async function create(req, res, next) {
@@ -17,6 +21,29 @@ const sendEmail = require("../utils/mail");
 //   res.json(result);
 // }
 
+function checkOrder(order, deal, dealItem) {
+  const problem = {};
+  if (
+    (deal.dealEndDate && deal.dealEndDate < new Date()) ||
+    deal.dealStartDate > new Date() ||
+    (deal.visible && deal.visible === false)
+  ) {
+    problem.notValid = true;
+  } else if (order.itemPrice !== dealItem.finalPrice) {
+    problem.priceChanged = dealItem.finalPrice;
+  } else {
+    if (order.quantity < deal.minBuy) {
+      problem.minBuy = deal.minBuy;
+    }
+    if (order.quantity > deal.maxBuy) {
+      problem.maxBuy = deal.maxBuy;
+    }
+    if (order.quantity > dealItem.quantity) {
+      problem.quantityAvailable = dealItem.quantity;
+    }
+  }
+  return problem;
+}
 async function login(req, res, next) {
   //check the email and password exist
   const { loginField, password } = req.body;
@@ -389,10 +416,9 @@ async function makeCartEmpty(req, res, next) {
 async function checkCartItems(req, res, next) {
   let cart = await User.findById(req.user._id).select("cart");
   cart = cart.cart;
-  console.log("cart",cart);
   let deal;
   let dealItem;
-
+  let problem;
   // {
   //   notValid,
   //   minBuy:,
@@ -403,54 +429,25 @@ async function checkCartItems(req, res, next) {
   //problems is array of the above object for each order in the cart if the object
   //is empty then there is no problem
   const problems = [];
-  let problem;
   let isThereProblem = false;
 
   // eslint-disable-next-line no-restricted-syntax
-  for (let order of cart) {
-    // console.log("order",order);
-    problem = {};
+  for (const order of cart) {
     // eslint-disable-next-line no-await-in-loop
-    deal = await Deal.findById(order.deal_id );
-    // console.log("deal",deal);
+    deal = await Deal.findById(order.deal_id);
     // eslint-disable-next-line no-restricted-syntax
-    for (let item of deal.item) {
-      // console.log("item",item);
-      if (item._id === order.item_id) {
-        // console.log("here");
+    for (const item of deal.item) {
+      if (item._id.equals(order.item_id)) {
         dealItem = item;
         break;
       }
     }
-    // console.log("dealItem",dealItem);
-
-    if (
-      (deal.dealEndDate && deal.dealEndDate < new Date()) ||
-      deal.dealStartDate > new Date() ||
-      (deal.visible && deal.visible === false)
-    ) {
-      problem.notValid = true;
-    } else if (order.itemPrice !== dealItem.finalPrice) {
-      problem.priceChanged = dealItem.finalPrice;
-    } else {
-      if (order.quantity < deal.minBuy) {
-        problem.minBuy = deal.minBuy;
-      }
-      if (order.quantity > deal.minBuy) {
-        problem.maxBuy = deal.maxBuy;
-      }
-      if (order.quantity > dealItem.quantity) {
-        problem.quantityAvailable = dealItem.quantity;
-      }
-    }
-    if (problem !== {}) {
+    problem = checkOrder(order, deal, dealItem);
+    if (Object.keys(problem).length !== 0) {
       isThereProblem = true;
     }
     problems.push(problem);
   }
-
-  //1-check that the order items is less than the quantity of the items in the deal
-
   return res.status(200).json({
     data: {
       isThereProblem,
@@ -458,6 +455,104 @@ async function checkCartItems(req, res, next) {
     }
   });
 }
+
+async function buyCartItems(req, res, next) {
+  const task = Fawn.Task();
+  //for every order
+  //  1-decrease the quantity of the item
+  //2-buy api
+  //3-add the cart to the temp table ?there is must be id related to the api
+  let cart = await User.findById(req.user._id).select("cart");
+  cart = cart.cart;
+
+  //for every order
+  //  1-decrease the quantity of the item
+  // eslint-disable-next-line no-restricted-syntax
+  for (const order of cart) {
+    task.update(
+      "Deal",
+      {
+        _id: order.deal_id,
+        "item._id": order.item_id
+      },
+      { $inc: { "item.$.quantity": -1 * order.quantity } }
+    );
+  }
+  task.update("User", { _id: req.user._id }, { cart: [], cartTotalPrice: 0 });
+
+  //2-buy api
+  task
+    .run({ useMongoose: true })
+    .then(function() {
+      //2-buy api
+      //3-add the cart to the temp table ?there is must be id related to the api
+      TempCart.create({
+        user: req.user._id,
+        cart
+      })
+        .then(tempCart => {
+          return res.status(200).json({
+            message: "waiting untill you buy",
+            data: tempCart
+          });
+        })
+        .catch(async err => {
+          const task2 = Fawn.Task();
+          // eslint-disable-next-line no-restricted-syntax
+          for (const order of cart) {
+            task2.update(
+              "Deal",
+              {
+                _id: order.deal_id,
+                "item._id": order.item_id
+              },
+              { $inc: { "item.$.quantity": order.quantity } }
+            );
+          }
+          task2.run();
+        });
+    })
+    .catch(function(err) {
+      console.log(err);
+    });
+}
+
+async function fawryPaymentDone(req, res, next) {
+  //get the cart from the tempcart
+  const tempCart = await TempCart.findOne({ user: req.user._id });
+  //add the orders to the orders table
+  const task = Fawn.Task();
+  for (const order of tempCart.cart) {
+    task.save("Order", {
+      customer: req.user._id,
+      deal: order.deal_id,
+      item: order.item_id,
+      quantity: order.quantity
+    });
+  }
+  task.run().then(async results => {
+    for (const result of results) {
+      const res = result.ops[0];
+      // eslint-disable-next-line no-await-in-loop
+      await User.findByIdAndUpdate(req.user._id, {
+        $push: { orders: res._id }
+      });
+      // eslint-disable-next-line no-await-in-loop
+      await Coupon.findOneAndUpdate(
+        { deal: res.deal, user: null },
+        { user: req.user._id, order: res._id }
+      );
+    }
+  });
+  await TempCart.findByIdAndDelete(tempCart._id);
+  return res.status(200).json({
+    message: "the payment done successfully"
+  });
+  //remove it from the temp table
+  //add the order to the customer
+  //add the order to the coupons
+}
+
 // user functions
 
 // get my data
@@ -530,7 +625,9 @@ module.exports = {
   cartChangeNumberOfItem,
   cartDeleteItem,
   makeCartEmpty,
-  checkCartItems
+  checkCartItems,
+  buyCartItems,
+  fawryPaymentDone
   // getMyInfo,
   // editMyInfo,
   // changeMyPasword

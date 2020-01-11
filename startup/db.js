@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const config = require("config");
+const Fawn = require("fawn");
 
 module.exports = function() {
   /*data base connection logic */
@@ -21,4 +22,5 @@ module.exports = function() {
     .catch(err => {
       console.log(err);
     });
+  Fawn.init(mongoose);
 };

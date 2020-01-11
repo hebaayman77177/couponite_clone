@@ -37,7 +37,8 @@ const userSchema = new mongoose.Schema({
   cartTotalPrice: {
     type: Number,
     default: 0
-  }
+  },
+  orders: [mongoose.Schema.ObjectId]
 });
 
 // hashing the password

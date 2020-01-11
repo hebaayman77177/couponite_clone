@@ -1,7 +1,25 @@
 const { Deal } = require("../models/deal");
 const { idExist } = require("../validationSchemas");
-const { ApiSearch }=require("../utils/apiSearch");
+const ApiSearch = require("../utils/apiSearch");
 
+function customersSearchMiddleware(req, res, next) {
+  const query = {
+    dealEndDate: { gt: Date() },
+    dealStartDate: { lt: Date() },
+    visible: true
+  };
+  req.query = { ...req.query, ...query };
+  next();
+}
+function secureSearchMiddleware(req, res, next) {
+  const query = {};
+  if (req.query["category.name"]) {
+    console.log("here");
+    query["category.name"] = req.query["category.name"];
+  }
+  req.query = query;
+  next();
+}
 async function createDeal(req, res, next) {
   const deal = await Deal.create(req.body);
   return res.status(200).json({
@@ -10,6 +28,7 @@ async function createDeal(req, res, next) {
   });
 }
 async function getDeals(req, res, next) {
+  console.log(req.query);
   const apiSearch = new ApiSearch(Deal.find({}), req.query);
   const deals = await apiSearch
     .filter()
@@ -17,6 +36,7 @@ async function getDeals(req, res, next) {
     .limit()
     .paginate().query;
 
+  // const deals =await Deal.find({});
   return res.status(200).json({
     length: deals.length,
     deals
@@ -58,5 +78,7 @@ module.exports = {
   getDeals,
   updateDeal,
   deleteDeal,
-  getDeal
+  getDeal,
+  customersSearchMiddleware,
+  secureSearchMiddleware
 };
