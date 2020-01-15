@@ -1,3 +1,4 @@
+const fs = require("fs-extra");
 const { Deal } = require("../models/deal");
 const { idExist } = require("../validationSchemas");
 const ApiSearch = require("../utils/apiSearch");
@@ -14,21 +15,27 @@ function customersSearchMiddleware(req, res, next) {
 function secureSearchMiddleware(req, res, next) {
   const query = {};
   if (req.query["category.name"]) {
-    console.log("here");
     query["category.name"] = req.query["category.name"];
   }
   req.query = query;
   next();
 }
 async function createDeal(req, res, next) {
-  const deal = await Deal.create(req.body);
+  const deal = new Deal(req.body);
+  // eslint-disable-next-line no-restricted-syntax
+  for (const imgFile of req.files) {
+    deal.itemsImages.push({
+      data: imgFile.buffer,
+      contentType: imgFile.mimetype
+    });
+  }
+  await deal.save();
   return res.status(200).json({
     message: "the deal has been created successfully",
     data: { deal }
   });
 }
 async function getDeals(req, res, next) {
-  console.log(req.query);
   const apiSearch = new ApiSearch(Deal.find({}), req.query);
   const deals = await apiSearch
     .filter()
@@ -69,9 +76,11 @@ async function updateDeal(req, res, next) {
     new: true
   });
   return res.status(200).json({
-    deal
+    data: deal
   });
 }
+
+
 
 module.exports = {
   createDeal,

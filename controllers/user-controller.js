@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const config = require("config");
 const Fawn = require("fawn");
+const axios = require("axios");
 const _ = require("lodash");
 const { User, validate } = require("../models/user");
 const { Token } = require("../models/token");
@@ -462,8 +463,8 @@ async function buyCartItems(req, res, next) {
   //  1-decrease the quantity of the item
   //2-buy api
   //3-add the cart to the temp table ?there is must be id related to the api
-  let cart = await User.findById(req.user._id).select("cart");
-  cart = cart.cart;
+  const user = await User.findById(req.user._id);
+  const cart = user.cart;
 
   //for every order
   //  1-decrease the quantity of the item
@@ -480,7 +481,6 @@ async function buyCartItems(req, res, next) {
   }
   task.update("User", { _id: req.user._id }, { cart: [], cartTotalPrice: 0 });
 
-  //2-buy api
   task
     .run({ useMongoose: true })
     .then(function() {
@@ -490,11 +490,53 @@ async function buyCartItems(req, res, next) {
         user: req.user._id,
         cart
       })
-        .then(tempCart => {
-          return res.status(200).json({
-            message: "waiting untill you buy",
-            data: tempCart
-          });
+        .then(async tempCart => {
+          //the encrypted merchant code from the email is v7L+yZ8QU3z5p2nmgcxvpQ==
+          // the security key from the email is f9dd11d1b08c44c78231bb593ba9a7f3
+          const stringToBeHashed = `v7L+yZ8QU3z5p2nmgcxvpQ==${tempCart._id.toString()}${user._id.toString()}PAYATFAWRY${(
+            Math.round(user.cartTotalPrice * 100) / 100
+          ).toFixed(2)}f9dd11d1b08c44c78231bb593ba9a7f3`;
+          console.log("stringToBeHashed", stringToBeHashed);
+          const signature = crypto
+            .createHash("sha256")
+            .update(stringToBeHashed)
+            .digest("base64");
+          console.log(signature);
+          axios
+            .post(
+              "https://atfawry.fawrystaging.com//ECommerceWeb/Fawry/payments/charge",
+              {
+                merchantCode: "v7L+yZ8QU3z5p2nmgcxvpQ==",
+                merchantRefNum: tempCart._id.toString(),
+                customerProfileId: user._id.toString(),
+                customerMobile: user.phone,
+                customerEmail: user.email,
+                paymentMethod: "PAYATFAWRY",
+                amount: (Math.round(user.cartTotalPrice * 100) / 100).toFixed(
+                  2
+                ),
+                currencyCode: "EGP",
+                description: "the charge request description",
+                paymentExpiry: new Date(new Date() + 24 * 3600 * 1000),
+                chargeItems: [
+                  {
+                    itemId: "897fa8e81be26df25db592e81c31c",
+                    description: "asdasd",
+                    price: 25.0,
+                    quantity: 1
+                  }
+                ],
+                signature
+              }
+            )
+            .then(result => {
+              console.log(result);
+              return res.status(200).json({
+                message: "waiting untill you buy",
+                data: tempCart
+              });
+            })
+            .catch(err => console.log(err));
         })
         .catch(async err => {
           const task2 = Fawn.Task();

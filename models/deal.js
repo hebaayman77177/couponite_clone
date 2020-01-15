@@ -82,7 +82,7 @@ const dealSchema = new mongoose.Schema({
   },
 
   totalQuantity: Number,
-
+  itemsImages: [{ data: Buffer, contentType: String }],
   item: [
     new mongoose.Schema({
       quantity: { type: Number, default: Infinity },
